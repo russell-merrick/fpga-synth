@@ -20,12 +20,31 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 ## Roadmap
 
-1. Multi-note — map buttons/switches to different pitches
-2. Better waveforms — sine or wavetable instead of square wave
-3. Envelope (ADSR) shaping
-4. Polyphony — multiple simultaneous voices
-5. MIDI input via PMOD UART or dedicated MIDI PMOD
-6. Effects — reverb, filter, etc. (stretch)
+1. **UART control** — play and control the synth from a PC keyboard over USB serial
+2. **Multi-note** — map UART keys (and physical switches) to a full octave of pitches
+3. **Wavetable sine oscillator** — replace square wave with a ROM-based sine lookup
+4. **ADSR envelope** — attack/decay/sustain/release shaping per note
+5. **Polyphony** — multiple simultaneous voices
+6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
+7. **Effects** — reverb, filter, etc. (stretch)
+
+## Next Up: UART Control
+
+The Go Board has a built-in FTDI USB-UART bridge (RX = pin 73, TX = pin 74) — no extra hardware needed. Adding a UART RX module unlocks real-time control from any serial terminal at 115200 baud.
+
+**Planned command set (single ASCII bytes):**
+
+| Key(s) | Action |
+|--------|--------|
+| `a s d f g h j` | Play notes C D E F G A B |
+| `z` | Mute / unmute |
+| `1` / `2` | Octave down / up |
+
+**Implementation plan:**
+1. `uart_rx.v` — standalone UART receiver module (8N1, 115200 baud, 25 MHz clock = 217 cycles/bit)
+2. Wire RX byte into a command decoder in `synth_top.v` — case statement maps ASCII to note frequency
+3. `uart_rx_tb.v` — testbench that bit-bangs bytes onto RX at correct timing and verifies decoded output
+4. Full integration test: simulate a keypress, verify correct audio sample appears at I2S output
 
 ---
 
