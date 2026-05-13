@@ -17,6 +17,10 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 - Outputs a 440 Hz (A4) square wave tone via the CS4344 DAC
 - SW1 button toggles tone on/off
 - LEDs blink at divided clock rates as a visual heartbeat
+- **UART modules integrated** — `UART_RX.v` and `UART_TX.v` sourced from [nandland/UART](https://github.com/nandland/UART) and added to the project
+- **UART loopback test verified on hardware** — fabric loopback (`o_TX_Serial` → `i_RX_Serial`) transmits `0x55` ('U') every second; LEDs show `1 0 1 0` pattern on success; confirmed via serial terminal at 115200 baud
+
+> **Currently loaded:** UART loopback test. Next commit restores the synth with UART RX command handling wired in.
 
 ## Roadmap
 
@@ -28,9 +32,13 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
 7. **Effects** — reverb, filter, etc. (stretch)
 
-## Next Up: UART Control
+## Next Up: UART → Synth Integration
 
-The Go Board has a built-in FTDI USB-UART bridge (RX = pin 73, TX = pin 74) — no extra hardware needed. Adding a UART RX module unlocks real-time control from any serial terminal at 115200 baud.
+UART modules are in and verified. Next step is restoring the synth with live UART control:
+
+1. Restore I2S audio pipeline in `synth_top.v` alongside the UART RX module
+2. Wire received bytes into a command decoder — case statement maps ASCII keys to note frequencies
+3. Add a testbench that bit-bangs bytes onto RX and verifies the correct audio sample appears at the I2S output
 
 **Planned command set (single ASCII bytes):**
 
@@ -39,12 +47,6 @@ The Go Board has a built-in FTDI USB-UART bridge (RX = pin 73, TX = pin 74) — 
 | `a s d f g h j` | Play notes C D E F G A B |
 | `z` | Mute / unmute |
 | `1` / `2` | Octave down / up |
-
-**Implementation plan:**
-1. `uart_rx.v` — standalone UART receiver module (8N1, 115200 baud, 25 MHz clock = 217 cycles/bit)
-2. Wire RX byte into a command decoder in `synth_top.v` — case statement maps ASCII to note frequency
-3. `uart_rx_tb.v` — testbench that bit-bangs bytes onto RX at correct timing and verifies decoded output
-4. Full integration test: simulate a keypress, verify correct audio sample appears at I2S output
 
 ---
 
@@ -115,7 +117,9 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 
 | File | Description |
 |------|-------------|
-| `synth_top.v` | Top-level design |
+| `synth_top.v` | Top-level design (currently: UART loopback test) |
+| `UART_RX.v` | UART receiver — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
+| `UART_TX.v` | UART transmitter — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
 | `synth_top_tb.v` | Self-checking testbench (`apio test`) |
 | `go-board.pcf` | Pin constraints for Go Board |
 | `apio.ini` | APIO project config |

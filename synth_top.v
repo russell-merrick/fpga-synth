@@ -1,103 +1,90 @@
-// FPGA Synthesizer — Top Level
-// Target: Nandland Go Board (iCE40 HX1K, 25 MHz oscillator)
-// Audio output: Digilent PMOD I2S2 (CS4344 DAC) in slave mode
+// UART Loopback Test
+// Target: Nandland Go Board (iCE40 HX1K, 25 MHz)
 //
-// Signal chain:
-//   25 MHz CLK → clock dividers → I2S clocks (MCLK/SCLK/LRCK)
-//                               → 440 Hz square wave → I2S serializer → DAC
+// Sends 0x55 every second via UART TX.
+// TX serial feeds directly back into RX (fabric loopback — no jumper needed).
+// LEDs show lower nibble of the last received byte.
+//
+// Expected result after ~1 second:
+//   LED1 ON  LED2 OFF  LED3 ON  LED4 OFF  (0x55 lower nibble = 0101)
+//
+// The TX pin also drives the physical UART line, so you can monitor
+// 0x55 ('U') arriving in a terminal at 115200 8N1.
 
 module SynthTop (
-    input  CLK,   // 25 MHz system clock
-    input  SW1,   // Button: toggle tone on/off (active low)
+    input  CLK,
+    input  RX,    // from host — unused in loopback, kept for PCF binding
+    output TX,    // to host — drives 0x55 ('U') every second
     output LED1,
     output LED2,
     output LED3,
-    output LED4,
-    output PMOD1,  // MCLK  — 12.5 MHz master clock
-    output PMOD2,  // LRCK  — 48.8 kHz left/right channel select
-    output PMOD3,  // SCLK  — 3.125 MHz bit clock
-    output PMOD4   // SDATA — serial audio data to DAC
+    output LED4
 );
 
-  // -------------------------------------------------------------------------
-  // Free-running counter — source for all clock and timing signals
-  // -------------------------------------------------------------------------
-  reg [23:0] counter = 0;
-  always @(posedge CLK) counter <= counter + 1;
-
-  // LEDs blink at successively halved rates as a visual heartbeat
-  assign LED1 = counter[23];
-  assign LED2 = counter[22];
-  assign LED3 = counter[21];
-  assign LED4 = counter[20];
+  localparam CLKS_PER_BIT = 217;        // 25 MHz / 115200 baud
+  localparam TEST_BYTE    = 8'h55;      // 'U' — alternating bits, easy to spot
+  localparam SEND_PERIOD  = 25_000_000; // 1 second @ 25 MHz
 
   // -------------------------------------------------------------------------
-  // I2S clock generation (all tapped from the free-running counter)
-  //
-  //   MCLK = 25 MHz / 2   = 12.5 MHz  (256× oversampling clock for CS4344)
-  //   SCLK = 25 MHz / 8   = 3.125 MHz (64 bits/frame × 48.8 kHz)
-  //   LRCK = 25 MHz / 512 = 48.828 kHz sample rate
+  // Periodic TX trigger — one-cycle pulse every SEND_PERIOD clocks
   // -------------------------------------------------------------------------
-  assign PMOD1 = counter[0];  // MCLK
-  assign PMOD3 = counter[2];  // SCLK
-  assign PMOD2 = counter[8];  // LRCK: low = left channel, high = right channel
+  reg [24:0] r_send_ctr = 0;
+  reg        r_tx_dv    = 0;
 
-  // -------------------------------------------------------------------------
-  // Tone enable — toggled by SW1 (active-low button), on by default
-  // -------------------------------------------------------------------------
-  reg sw1_prev   = 1;
-  reg tone_enable = 1;
-
-  always @(posedge CLK)
-  begin
-    sw1_prev <= SW1;
-    if (sw1_prev == 1 && SW1 == 0)  // falling edge = button pressed
-      tone_enable <= ~tone_enable;
+  always @(posedge CLK) begin
+    r_tx_dv <= 1'b0;
+    if (r_send_ctr == SEND_PERIOD - 1) begin
+      r_send_ctr <= 0;
+      r_tx_dv    <= 1'b1;
+    end else
+      r_send_ctr <= r_send_ctr + 1;
   end
 
   // -------------------------------------------------------------------------
-  // 440 Hz (A4) square wave oscillator
-  // Period = 25 MHz / (2 × 28409) = 440.01 Hz
+  // UART TX
   // -------------------------------------------------------------------------
-  localparam TONE_DIVISOR = 28409;
-  reg [15:0] tone_counter = 0;
-  reg        tone_out     = 0;
+  wire w_tx_serial;
 
-  always @(posedge CLK)
-  begin
-    if (tone_counter >= TONE_DIVISOR - 1)
-    begin
-      tone_counter <= 0;
-      tone_out     <= ~tone_out;
-    end
-    else
-      tone_counter <= tone_counter + 1;
+  UART_TX #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_tx (
+    .i_Rst_L    (1'b1),
+    .i_Clock    (CLK),
+    .i_TX_DV    (r_tx_dv),
+    .i_TX_Byte  (TEST_BYTE),
+    .o_TX_Active(),
+    .o_TX_Serial(w_tx_serial),
+    .o_TX_Done  ()
+  );
+
+  assign TX = w_tx_serial;
+
+  // -------------------------------------------------------------------------
+  // UART RX — fabric loopback: TX serial wire feeds RX input directly
+  // -------------------------------------------------------------------------
+  wire       w_rx_dv;
+  wire [7:0] w_rx_byte;
+
+  UART_RX #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_rx (
+    .i_Rst_L    (1'b1),
+    .i_Clock    (CLK),
+    .i_RX_Serial(w_tx_serial),  // loopback — not the physical RX pin
+    .o_RX_DV    (w_rx_dv),
+    .o_RX_Byte  (w_rx_byte)
+  );
+
+  // -------------------------------------------------------------------------
+  // Latch received byte on DV pulse, display lower nibble on LEDs.
+  // r_received stays 0x00 until first successful loopback.
+  // -------------------------------------------------------------------------
+  reg [7:0] r_received = 8'h00;
+
+  always @(posedge CLK) begin
+    if (w_rx_dv)
+      r_received <= w_rx_byte;
   end
 
-  // -------------------------------------------------------------------------
-  // Audio sample latch
-  // Capture a new sample at the start of each left-channel frame (LRCK low,
-  // bit_pos = 0) so the value stays stable across the full 32-bit I2S frame.
-  // Quarter-amplitude square wave: +0x1FFF / -0x1FFF (16-bit signed)
-  // -------------------------------------------------------------------------
-  wire [4:0] bit_pos;
-  assign bit_pos = counter[7:3];  // 0–31: position within the 32-bit I2S frame
-
-  reg [15:0] audio_sample = 0;
-
-  always @(posedge CLK)
-  begin
-    if (counter[8:0] == 0)  // start of left channel frame
-      audio_sample <= (tone_enable) ? (tone_out ? 16'h1FFF : 16'hE001) : 16'h0000;
-  end
-
-  // -------------------------------------------------------------------------
-  // I2S serializer — MSB first, standard I2S format
-  // Standard I2S has a 1-bit delay after LRCK transitions before data starts,
-  // so bit_pos 0 is a don't-care and data occupies bit_pos 1–16.
-  // -------------------------------------------------------------------------
-  wire w_DAC_Data;
-  assign w_DAC_Data = (bit_pos >= 1 && bit_pos <= 16) ? audio_sample[16 - bit_pos] : 1'b0;
-  assign PMOD4 = w_DAC_Data;
+  assign LED1 = r_received[0];  // 1 on success (0x55 bit 0 = 1)
+  assign LED2 = r_received[1];  // 0 on success
+  assign LED3 = r_received[2];  // 1 on success
+  assign LED4 = r_received[3];  // 0 on success
 
 endmodule
