@@ -1,0 +1,33 @@
+# Verilog Coding Style Rules
+
+## Formatting
+
+- `begin` and `end` statements should always be on their own line, not on the same line as the control statement.
+
+Good:
+```verilog
+always @(posedge CLK)
+begin
+  counter <= counter + 1;
+end
+```
+
+Bad:
+```verilog
+always @(posedge CLK) begin
+  counter <= counter + 1;
+end
+```
+
+- Wires should always be declared on their own line and assigned separately, not combined in a single statement.
+
+Good:
+```verilog
+wire [15:0] audio_sample;
+assign audio_sample = tone_out ? 16'h7FFF : 16'h8001;
+```
+
+Bad:
+```verilog
+wire [15:0] audio_sample = tone_out ? 16'h7FFF : 16'h8001;
+```
