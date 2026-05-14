@@ -4,9 +4,10 @@ Sends UART commands to the Go Board and prints what was sent.
 The human confirms audio / LED responses.
 
 Usage:
-    python scripts/hw_test.py              # run full scale + waveform test
-    python scripts/hw_test.py --port COM4  # override port
-    python scripts/hw_test.py --send a     # send a single key
+    python scripts/hw_test.py                # run full scale + waveform test
+    python scripts/hw_test.py --demo twinkle # play Twinkle Twinkle Little Star
+    python scripts/hw_test.py --port COM4    # override port
+    python scripts/hw_test.py --send a       # send a single key
 """
 
 import serial
@@ -78,10 +79,65 @@ def run_scale(ser):
 
     print("\nDone. Confirm: scale, octave shift, gate toggle, then 4 waveforms on A4.")
 
+def run_twinkle(ser):
+    BPM = 100
+    Q   = 60 / BPM        # quarter note
+    H   = Q * 2           # half note
+    GAP = 0.04            # brief gate-off gap between notes for articulation
+
+    def note(key, dur):
+        ser.write(key.encode())
+        time.sleep(dur - GAP)
+        ser.write(b' ')   # gate off
+        time.sleep(GAP)
+
+    print("\n--- Twinkle Twinkle Little Star ---")
+    print("    Resetting: octave 4, sine wave...")
+
+    for _ in range(8):
+        ser.write(b'z')
+        time.sleep(0.04)
+    for _ in range(4):
+        ser.write(b'x')
+        time.sleep(0.04)
+    ser.write(b'1')   # sine
+    time.sleep(0.4)
+
+    print("    Playing...")
+
+    # C C G G A A G       (Twinkle twinkle little star)
+    note('a', Q); note('a', Q); note('g', Q); note('g', Q)
+    note('h', Q); note('h', Q); note('g', H)
+
+    # F F E E D D C       (How I wonder what you are)
+    note('f', Q); note('f', Q); note('d', Q); note('d', Q)
+    note('s', Q); note('s', Q); note('a', H)
+
+    # G G F F E E D       (Up above the world so high)
+    note('g', Q); note('g', Q); note('f', Q); note('f', Q)
+    note('d', Q); note('d', Q); note('s', H)
+
+    # G G F F E E D       (Like a diamond in the sky)
+    note('g', Q); note('g', Q); note('f', Q); note('f', Q)
+    note('d', Q); note('d', Q); note('s', H)
+
+    # C C G G A A G       (Twinkle twinkle little star)
+    note('a', Q); note('a', Q); note('g', Q); note('g', Q)
+    note('h', Q); note('h', Q); note('g', H)
+
+    # F F E E D D C       (How I wonder what you are)
+    note('f', Q); note('f', Q); note('d', Q); note('d', Q)
+    note('s', Q); note('s', Q); note('a', H)
+
+    print("    Done.")
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', default=PORT)
     parser.add_argument('--send', help='send a single character and exit')
+    parser.add_argument('--demo', choices=['twinkle'], help='play a demo song')
     args = parser.parse_args()
 
     try:
@@ -94,6 +150,8 @@ def main():
 
     if args.send:
         send(ser, args.send[0])
+    elif args.demo == 'twinkle':
+        run_twinkle(ser)
     else:
         run_scale(ser)
 
