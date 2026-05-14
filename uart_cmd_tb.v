@@ -2,7 +2,7 @@
 // Run with: apio test
 //
 // Drives i_RX_DV/i_RX_Byte directly — no UART bit-timing needed.
-// Tests every key mapping, octave clamping, gate toggle, and unknown-byte handling.
+// Tests every key mapping, octave clamping, gate toggle, wave select, and unknown-byte handling.
 `include "constants.vh"
 `timescale 1ns/1ps
 

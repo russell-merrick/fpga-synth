@@ -1,5 +1,5 @@
 // Phase accumulator oscillator — one synthesizer voice.
-// Advances phase and reads the sine wavetable on each i_DV pulse (from i2s_tx).
+// Advances phase and reads the wavetable on each i_DV pulse (from i2s_tx).
 `include "constants.vh"
 
 module voice (

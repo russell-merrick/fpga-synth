@@ -11,7 +11,7 @@
 //   6. UART 'z' → octave decrements
 //   7. UART 'h' → A4, consecutive samples differ (oscillator running)
 //   8. UART ' ' → gate toggles off/on
-//   9. UART 'k' → C + r_high flag, cleared by next note key
+//   9. UART 'k' → C + o_high flag, cleared by next note key
 //  10. UART '2'/'1' → wave select passes through hierarchy
 `timescale 1ns/1ps
 
@@ -154,12 +154,12 @@ module synth_top_tb;
     send_byte(8'h6B);   // 'k'
     repeat(600) @(posedge CLK);
     pass_fail(dut.u_uart.u_cmd.o_note == 4'd0 && dut.u_uart.u_cmd.o_high == 1'b1,
-              "UART 'k' -> note=C, r_high=1");
+              "UART 'k' -> note=C, o_high=1");
 
     send_byte(8'h73);   // 's' → D
     repeat(600) @(posedge CLK);
     pass_fail(dut.u_uart.u_cmd.o_note == 4'd2 && dut.u_uart.u_cmd.o_high == 1'b0,
-              "UART 's' after 'k' -> note=D, r_high=0");
+              "UART 's' after 'k' -> note=D, o_high=0");
 
     // ── 10. Wave select passes through hierarchy ──────────────────────────────
     send_byte(8'h32);   // '2' → triangle

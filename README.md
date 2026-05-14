@@ -15,8 +15,8 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 - I2S audio pipeline confirmed working on hardware (CS4344 DAC via PMOD I2S2)
 - **UART-controlled synth** — play notes from a PC keyboard over USB serial at 115200 baud
-- Phase accumulator oscillator — square wave, chromatic scale across octaves 0–7
-- Ableton Computer MIDI Keyboard layout (see [Playing the Synth](#playing-the-synth) below)
+- Wavetable oscillator with 4 selectable waveforms: sine, triangle, sawtooth, square
+- Chromatic scale across octaves 0–7, Ableton Computer MIDI Keyboard layout (see [Playing the Synth](#playing-the-synth) below)
 - LED1 = gate (lit when a note is playing), LED2–4 = current octave in binary
 
 ## Playing the Synth
@@ -65,6 +65,10 @@ C  C#   D  D#   E   F  F#   G  G#   A  A#   B   C+
 | `z` | Octave down |
 | `x` | Octave up |
 | `space` | Gate toggle (mute / unmute) |
+| `1` | Waveform: sine |
+| `2` | Waveform: triangle |
+| `3` | Waveform: sawtooth |
+| `4` | Waveform: square |
 
 ### LEDs during playback
 
@@ -83,7 +87,7 @@ Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
 
 1. ~~**UART control**~~ ✓ — Ableton-layout keyboard over USB serial, confirmed on hardware
 2. ~~**Modular refactor**~~ ✓ — `synth_top.v` is pure instantiation of `uart_top`, `voice`, `i2s_tx`
-3. **Wavetable sine oscillator** — replace square wave in `voice.v` with a ROM-based sine lookup
+3. ~~**Wavetable oscillator**~~ ✓ — ROM-based wavetable with 4 selectable waveforms (sine, triangle, sawtooth, square), selected via keys 1–4
 4. **ADSR envelope** — attack/decay/sustain/release shaping per note
 5. **Polyphony** — multiple simultaneous voices
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
@@ -187,9 +191,10 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 | `constants.vh` | Project-wide defines — clock bits, baud rate, synth defaults |
 | `CLAUDE.md` | Verilog coding conventions for this project |
 | `synth_top_tb.v` | Self-checking testbench for full synth stack |
-| `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (36 tests, no UART timing needed) |
+| `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (no UART timing needed) |
 | `scripts/hw_test.py` | Hardware test script — sends note sequences via pyserial |
-| `scripts/gen_sine.py` | Generates `sine.hex` wavetable for `voice.v` |
+| `scripts/gen_wavetable.py` | Generates `wavetable.hex` — 4 waveforms × 256 entries of 16-bit PCM |
+| `wavetable.hex` | 1024-entry ROM image loaded by `voice.v` at synthesis |
 | `go-board.pcf` | Pin constraints for Go Board |
 | `apio.ini` | APIO project config |
 
