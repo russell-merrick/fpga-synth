@@ -17,7 +17,8 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 - **UART-controlled synth** — play notes from a PC keyboard over USB serial at 115200 baud
 - Wavetable oscillator with 4 selectable waveforms: sine, triangle, sawtooth, square
 - Chromatic scale across octaves 0–7, Ableton Computer MIDI Keyboard layout (see [Playing the Synth](#playing-the-synth) below)
-- LED1 = gate (lit when a note is playing), LED2–4 = current octave in binary
+- **ADSR envelope** — ~8 ms attack, ~7 ms decay, 78% sustain, ~26 ms release (rates hardcoded in `constants.vh`)
+- LED1 = gate signal (lit while note is held; sound fades ~26 ms after gate-off), LED2–4 = current octave in binary
 
 ## Playing the Synth
 
@@ -74,7 +75,7 @@ C  C#   D  D#   E   F  F#   G  G#   A  A#   B   C+
 
 | LED | Meaning |
 |-----|---------|
-| LED1 | Gate — lit when a note is active |
+| LED1 | Gate signal — lit while note is held; sound fades ~26 ms after gate-off (ADSR release) |
 | LED2 | Octave bit 0 (LSB) |
 | LED3 | Octave bit 1 |
 | LED4 | Octave bit 2 (MSB) |
@@ -88,7 +89,7 @@ Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
 1. ~~**UART control**~~ ✓ — Ableton-layout keyboard over USB serial, confirmed on hardware
 2. ~~**Modular refactor**~~ ✓ — `synth_top.v` is pure instantiation of `uart_top`, `voice`, `i2s_tx`
 3. ~~**Wavetable oscillator**~~ ✓ — ROM-based wavetable with 4 selectable waveforms (sine, triangle, sawtooth, square), selected via keys 1–4
-4. **ADSR envelope** — attack/decay/sustain/release shaping per note
+4. ~~**ADSR envelope**~~ ✓ — per-note attack/decay/sustain/release; rates hardcoded in `constants.vh`, to be made controllable
 5. **Polyphony** — multiple simultaneous voices
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
 7. **Effects** — reverb, filter, etc. (stretch)
@@ -183,10 +184,11 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 src/        HDL source
   synth_top.v       Top-level — pure instantiation of uart_top, voice, i2s_tx
   uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd
-  uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate signals
-  voice.v           Phase accumulator oscillator — 16-bit PCM sample per LRCK period
+  uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate/wave signals
+  voice.v           Phase accumulator oscillator + ADSR — 16-bit PCM sample per LRCK period
+  adsr.v            ADSR envelope generator — 5-state FSM, 16-bit envelope, driven by LRCK tick
   i2s_tx.v          I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample
-  constants.vh      Project-wide defines — clock bits, baud rate, synth defaults
+  constants.vh      Project-wide defines — clock bits, baud rate, synth defaults, ADSR rates
   UART_RX.v         8N1 UART receiver, parameterized CLKS_PER_BIT (source: nandland/UART)
   UART_TX.v         8N1 UART transmitter, parameterized CLKS_PER_BIT (source: nandland/UART)
 
@@ -194,6 +196,7 @@ sim/        Simulation
   synth_top_tb.v    Self-checking testbench for full synth stack
   uart_cmd_tb.v     Self-checking testbench for uart_cmd (no UART timing needed)
   i2s_tx_tb.v       Self-checking testbench for I2S transmitter
+  adsr_tb.v         Self-checking testbench for ADSR envelope FSM
   test_utils.vh     Shared pass_fail / finish_test tasks
   uart_cmd_tb.gtkw  GTKWave signal layout for uart_cmd
 

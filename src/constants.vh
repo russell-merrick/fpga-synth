@@ -18,3 +18,12 @@
 `define DEFAULT_NOTE    9           // 0=C … 9=A … 11=B
 `define DEFAULT_OCTAVE  4
 `define DEFAULT_WAVE    2'd0        // 0=sine 1=triangle 2=sawtooth 3=square
+
+// ── ADSR defaults ─────────────────────────────────────────────────────────────
+// Rate parameters: increment/decrement applied to the 16-bit envelope per
+// LRCK sample tick (48.828 kHz).  Higher value = faster transition.
+// Sustain is a level: 0–255 maps to 0–32640  (value × 128).
+`define DEFAULT_ATTACK   8'd80      // ~8 ms attack   (32767/80  ≈ 410 ticks)
+`define DEFAULT_DECAY    8'd20      // ~7 ms decay
+`define DEFAULT_SUSTAIN  8'd200     // 78 % sustain level  (200×128 = 25600)
+`define DEFAULT_RELEASE  8'd20      // ~26 ms release  (25600/20 ≈ 1280 ticks)

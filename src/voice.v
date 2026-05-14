@@ -43,7 +43,11 @@ module voice (
   // Wavetable ROM — 4 waveforms × 256 entries × 16-bit signed PCM = 4 BRAMs.
   // Address: {i_wave[1:0], r_phase[31:24]}
   reg [15:0] r_wave_rom [0:1023];
-  initial $readmemh("data/wavetable.hex", r_wave_rom);
+
+  initial
+  begin
+    $readmemh("data/wavetable.hex", r_wave_rom);
+  end
 
   reg [31:0] r_phase  = 32'd0;
   reg [15:0] r_sample = 16'd0;
@@ -57,6 +61,22 @@ module voice (
     end
   end
 
-  assign o_sample = i_gate ? r_sample : 16'h0000;
+  wire [15:0] w_env;
+
+  adsr u_adsr (
+    .i_CLK     (i_CLK),
+    .i_DV      (i_DV),
+    .i_gate    (i_gate),
+    .i_attack  (`DEFAULT_ATTACK),
+    .i_decay   (`DEFAULT_DECAY),
+    .i_sustain (`DEFAULT_SUSTAIN),
+    .i_release (`DEFAULT_RELEASE),
+    .o_env     (w_env)
+  );
+
+  // Top 8 bits of envelope → 16×9 multiply instead of 16×16, saving ~350 LCs (HX1K has no DSP blocks).
+  wire [7:0] w_env_hi = w_env[14:7];
+  wire signed [23:0] w_product = $signed(r_sample) * $signed({1'b0, w_env_hi});
+  assign o_sample = w_product[23:8];
 
 endmodule

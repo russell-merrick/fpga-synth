@@ -1,6 +1,6 @@
 // UART top-level — instantiates all UART sub-modules
 //
-// Exposes decoded synth controls (note/octave/gate/high) from the RX side
+// Exposes decoded synth controls (note/octave/gate/high/wave) from the RX side
 // and raw TX control inputs for future use (echo, status messages, etc.).
 `include "src/constants.vh"
 

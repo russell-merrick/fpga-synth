@@ -15,7 +15,10 @@ module i2s_tx (
 
   reg [31:0] r_ctr = 32'd0;
 
-  always @(posedge i_CLK) r_ctr <= r_ctr + 32'd1;
+  always @(posedge i_CLK)
+  begin
+    r_ctr <= r_ctr + 32'd1;
+  end
 
   assign o_MCLK = r_ctr[`MCLK_BIT];
   assign o_SCLK = r_ctr[`SCLK_BIT];
