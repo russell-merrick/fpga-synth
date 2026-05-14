@@ -37,7 +37,7 @@ def square(i):
 
 waveforms = [sine, triangle, sawtooth, square]
 
-output_path = os.path.join(os.path.dirname(__file__), "..", "wavetable.hex")
+output_path = os.path.join(os.path.dirname(__file__), "..", "data", "wavetable.hex")
 
 with open(output_path, "w") as f:
     for waveform in waveforms:
