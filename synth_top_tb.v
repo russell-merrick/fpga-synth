@@ -119,18 +119,18 @@ module synth_top_tb;
     // ── 4. 'a' → C4, gate on ─────────────────────────────────────────────────
     send_byte(8'h61);   // 'a'
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_note == 4'd0 && dut.r_gate == 1'b1,
+    pass_fail(dut.u_uart.u_cmd.o_note == 4'd0 && dut.u_uart.u_cmd.o_gate == 1'b1,
               "UART 'a' -> note=C, gate=1");
 
     // ── 5. 'x' → octave up ───────────────────────────────────────────────────
     send_byte(8'h78);   // 'x'
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_octave == 3'd5, "UART 'x' -> octave 5");
+    pass_fail(dut.u_uart.u_cmd.o_octave == 3'd5, "UART 'x' -> octave 5");
 
     // ── 6. 'z' → octave down ─────────────────────────────────────────────────
     send_byte(8'h7A);   // 'z'
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_octave == 3'd4, "UART 'z' -> octave 4");
+    pass_fail(dut.u_uart.u_cmd.o_octave == 3'd4, "UART 'z' -> octave 4");
 
     // ── 7. 'h' → A4, I2S sample is valid square wave value ───────────────────
     send_byte(8'h68);   // 'h' → A
@@ -141,21 +141,21 @@ module synth_top_tb;
     // ── 8. space → gate toggle ────────────────────────────────────────────────
     send_byte(8'h20);   // space
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_gate == 1'b0, "UART space -> gate off");
+    pass_fail(dut.u_uart.u_cmd.o_gate == 1'b0, "UART space -> gate off");
 
     send_byte(8'h20);   // space again
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_gate == 1'b1, "UART space x2 -> gate on");
+    pass_fail(dut.u_uart.u_cmd.o_gate == 1'b1, "UART space x2 -> gate on");
 
     // ── 9. 'k' sets r_high; next note clears it ───────────────────────────────
     send_byte(8'h6B);   // 'k'
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_note == 4'd0 && dut.r_high == 1'b1,
+    pass_fail(dut.u_uart.u_cmd.o_note == 4'd0 && dut.u_uart.u_cmd.o_high == 1'b1,
               "UART 'k' -> note=C, r_high=1");
 
     send_byte(8'h73);   // 's' → D
     repeat(600) @(posedge CLK);
-    pass_fail(dut.r_note == 4'd2 && dut.r_high == 1'b0,
+    pass_fail(dut.u_uart.u_cmd.o_note == 4'd2 && dut.u_uart.u_cmd.o_high == 1'b0,
               "UART 's' after 'k' -> note=D, r_high=0");
 
     // ── Summary ───────────────────────────────────────────────────────────────
