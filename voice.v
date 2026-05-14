@@ -1,5 +1,5 @@
 // Phase accumulator oscillator — one synthesizer voice.
-// Advances phase and latches a square-wave sample on each i_DV pulse (from i2s_tx).
+// Advances phase and reads the sine wavetable on each i_DV pulse (from i2s_tx).
 `include "constants.vh"
 
 module voice (
@@ -39,16 +39,20 @@ module voice (
     (w_oct == 3'd6) ? (w_base_inc << 2) :
                       (w_base_inc << 3); // oct 7
 
+  // Sine wavetable — 256 × 16-bit signed PCM, inferred as one BRAM.
+  reg [15:0] r_sine_rom [0:255];
+  initial $readmemh("sine.hex", r_sine_rom);
+
   reg [31:0] r_phase  = 32'd0;
   reg [15:0] r_sample = 16'd0;
 
   always @(posedge i_CLK) begin
     if (i_DV) begin
       r_phase  <= r_phase + w_phase_inc;
-      r_sample <= i_gate ? (r_phase[31] ? 16'h7FFF : 16'h8000) : 16'h0000;
+      r_sample <= r_sine_rom[r_phase[31:24]];
     end
   end
 
-  assign o_sample = r_sample;
+  assign o_sample = i_gate ? r_sample : 16'h0000;
 
 endmodule

@@ -33,10 +33,10 @@ python -m serial.tools.list_ports
 python -m serial.tools.miniterm COM3 115200
 
 # Run the automated scale test
-python hw_test.py
+python scripts/hw_test.py
 
 # Send a single note
-python hw_test.py --send h
+python scripts/hw_test.py --send h
 ```
 
 ### Key layout — Ableton Computer MIDI Keyboard
@@ -154,9 +154,9 @@ apio sim uart_cmd_tb.v              # open uart_cmd waveform in GTKWave
 # Serial / hardware
 python -m serial.tools.list_ports   # find the Go Board's COM port
 python -m serial.tools.miniterm COM3 115200   # interactive terminal
-python hw_test.py                   # automated scale + octave + gate test
-python hw_test.py --port COM4       # override port
-python hw_test.py --send h          # send a single key
+python scripts/hw_test.py                   # automated scale + octave + gate test
+python scripts/hw_test.py --port COM4       # override port
+python scripts/hw_test.py --send h          # send a single key
 ```
 
 ---
@@ -188,7 +188,8 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 | `CLAUDE.md` | Verilog coding conventions for this project |
 | `synth_top_tb.v` | Self-checking testbench for full synth stack |
 | `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (36 tests, no UART timing needed) |
-| `hw_test.py` | Hardware test script — sends note sequences via pyserial |
+| `scripts/hw_test.py` | Hardware test script — sends note sequences via pyserial |
+| `scripts/gen_sine.py` | Generates `sine.hex` wavetable for `voice.v` |
 | `go-board.pcf` | Pin constraints for Go Board |
 | `apio.ini` | APIO project config |
 

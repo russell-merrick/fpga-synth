@@ -90,6 +90,7 @@ module synth_top_tb;
   // ── Helpers ─────────────────────────────────────────────────────────────────
   integer      t1, t2, period_clks;
   reg [15:0]   captured_sample;
+  reg [15:0]   captured_sample_b;
 
   // ── Tests ───────────────────────────────────────────────────────────────────
   initial begin
@@ -132,11 +133,12 @@ module synth_top_tb;
     repeat(600) @(posedge CLK);
     pass_fail(dut.u_uart.u_cmd.o_octave == 3'd4, "UART 'z' -> octave 4");
 
-    // ── 7. 'h' → A4, I2S sample is valid square wave value ───────────────────
+    // ── 7. 'h' → A4, consecutive I2S samples advance (oscillator running) ───
     send_byte(8'h68);   // 'h' → A
     capture_left_sample(captured_sample);
-    pass_fail(captured_sample == 16'h7FFF || captured_sample == 16'h8000,
-              "UART 'h' -> A4, I2S sample = 0x7FFF or 0x8000");
+    capture_left_sample(captured_sample_b);
+    pass_fail(captured_sample != captured_sample_b,
+              "UART 'h' -> A4, consecutive samples differ (osc advancing)");
 
     // ── 8. space → gate toggle ────────────────────────────────────────────────
     send_byte(8'h20);   // space
