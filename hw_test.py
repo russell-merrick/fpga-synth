@@ -65,7 +65,10 @@ def run_scale(ser):
     send(ser, 'h')   # A
     time.sleep(CHAR_GAP)
 
-    print("\nDone. Confirm: chromatic scale, octave shift, gate toggle, A4 at end.")
+    print("\n--- Gate off ---")
+    send(ser, ' ')
+
+    print("\nDone. Confirm: chromatic scale, octave shift, gate toggle, A4 at end, then silence.")
 
 def main():
     parser = argparse.ArgumentParser()
