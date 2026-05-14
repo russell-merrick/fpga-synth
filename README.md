@@ -180,17 +180,15 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 ## Project Layout
 
 ```
-src/        Own HDL source
+src/        HDL source
   synth_top.v       Top-level — pure instantiation of uart_top, voice, i2s_tx
   uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd
   uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate signals
   voice.v           Phase accumulator oscillator — 16-bit PCM sample per LRCK period
   i2s_tx.v          I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample
   constants.vh      Project-wide defines — clock bits, baud rate, synth defaults
-
-lib/        Vendor HDL (unmodified, source: nandland/UART)
-  UART_RX.v         8N1 UART receiver, parameterized CLKS_PER_BIT
-  UART_TX.v         8N1 UART transmitter, parameterized CLKS_PER_BIT
+  UART_RX.v         8N1 UART receiver, parameterized CLKS_PER_BIT (source: nandland/UART)
+  UART_TX.v         8N1 UART transmitter, parameterized CLKS_PER_BIT (source: nandland/UART)
 
 sim/        Simulation
   synth_top_tb.v    Self-checking testbench for full synth stack
