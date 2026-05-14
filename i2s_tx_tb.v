@@ -46,7 +46,8 @@ module i2s_tx_tb;
       @(negedge o_LRCK);
       @(posedge o_SCLK);          // delay bit — skip
       sample = 16'd0;
-      for (j = 0; j < 16; j = j + 1) begin
+      for (j = 0; j < 16; j = j + 1)
+      begin
         @(posedge o_SCLK);
         sample = {sample[14:0], o_SDATA};
       end
@@ -61,7 +62,8 @@ module i2s_tx_tb;
       @(posedge o_LRCK);
       @(posedge o_SCLK);          // delay bit — skip
       sample = 16'd0;
-      for (j = 0; j < 16; j = j + 1) begin
+      for (j = 0; j < 16; j = j + 1)
+      begin
         @(posedge o_SCLK);
         sample = {sample[14:0], o_SDATA};
       end
@@ -75,7 +77,8 @@ module i2s_tx_tb;
   reg [15:0] cap_right;
 
   // ── Tests ────────────────────────────────────────────────────────────────────
-  initial begin
+  initial
+  begin
     $dumpvars(0, i2s_tx_tb);
     $display("=== %0s ===", TB_NAME);
 
@@ -130,7 +133,8 @@ module i2s_tx_tb;
   end
 
   // Watchdog: bail after 5M simulated clock cycles
-  initial begin
+  initial
+  begin
     repeat(5_000_000) @(posedge CLK);
     $display("FAIL: simulation timeout");
     $finish;

@@ -52,7 +52,8 @@ module uart_cmd_tb;
   endtask
 
   // ── Tests ───────────────────────────────────────────────────────────────────
-  initial begin
+  initial
+  begin
     $dumpvars(0, uart_cmd_tb);
     $display("=== %0s ===", TB_NAME);
 

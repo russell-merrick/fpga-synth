@@ -8,7 +8,8 @@ task pass_fail;
   input [8*48-1:0] name;
   begin
     if (ok) $display("  PASS: %0s", name);
-    else begin
+    else
+    begin
       $display("  FAIL: %0s", name);
       fail_count = fail_count + 1;
     end

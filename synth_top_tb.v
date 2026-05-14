@@ -50,7 +50,8 @@ module synth_top_tb;
     begin
       RX = 1'b0;                                       // start bit
       repeat(CLKS_PER_BIT) @(posedge CLK);
-      for (i = 0; i < 8; i = i + 1) begin
+      for (i = 0; i < 8; i = i + 1)
+      begin
         RX = b[i];                                     // LSB first
         repeat(CLKS_PER_BIT) @(posedge CLK);
       end
@@ -70,7 +71,8 @@ module synth_top_tb;
       @(negedge LRCK);
       @(posedge SCLK);           // delay bit — skip
       sample = 16'd0;
-      for (j = 0; j < 16; j = j + 1) begin
+      for (j = 0; j < 16; j = j + 1)
+      begin
         @(posedge SCLK);
         sample = {sample[14:0], SDATA};
       end
@@ -83,7 +85,8 @@ module synth_top_tb;
   reg [15:0]   captured_sample_b;
 
   // ── Tests ───────────────────────────────────────────────────────────────────
-  initial begin
+  initial
+  begin
     $dumpvars(0, synth_top_tb);
     $display("=== %0s ===", TB_NAME);
 
@@ -164,7 +167,8 @@ module synth_top_tb;
   end
 
   // Watchdog: bail after 30M simulated clock cycles
-  initial begin
+  initial
+  begin
     repeat(30_000_000) @(posedge CLK);
     $display("FAIL: simulation timeout");
     $finish;

@@ -14,6 +14,7 @@ module i2s_tx (
 );
 
   reg [31:0] r_ctr = 32'd0;
+
   always @(posedge i_CLK) r_ctr <= r_ctr + 32'd1;
 
   assign o_MCLK = r_ctr[`MCLK_BIT];
@@ -23,20 +24,28 @@ module i2s_tx (
 
   reg r_lrck_d = 1'b0;
   reg r_sclk_d = 1'b0;
-  always @(posedge i_CLK) begin
+
+  always @(posedge i_CLK)
+  begin
     r_lrck_d <= w_lrck;
     r_sclk_d <= r_ctr[`SCLK_BIT];
   end
+
   wire w_lrck_fall = r_lrck_d & ~w_lrck;
   wire w_lrck_edge = r_lrck_d ^ w_lrck;
   wire w_sclk_fall = r_sclk_d & ~r_ctr[`SCLK_BIT];
 
   // Counts SCLK falling edges within each LRCK half-period; resets on every LRCK edge.
   reg [4:0] r_bit_pos = 5'd0;
-  always @(posedge i_CLK) begin
-    if (w_lrck_edge) begin
+
+  always @(posedge i_CLK)
+  begin
+    if (w_lrck_edge)
+    begin
       r_bit_pos <= 5'd0;
-    end else if (w_sclk_fall) begin
+    end
+    else if (w_sclk_fall)
+    begin
       r_bit_pos <= r_bit_pos + 5'd1;
     end
   end

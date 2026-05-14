@@ -38,9 +38,12 @@ assign o_SDATA = (r_bit_pos >= 5'd1 && r_bit_pos <= 5'd16)
                ? i_sample[16 - r_bit_pos] : 1'b0;
 
 // correct — sequential always
-always @(posedge i_CLK) begin
-    if (i_DV)
-        r_phase <= r_phase + w_phase_inc;
+always @(posedge i_CLK)
+begin
+  if (i_DV)
+  begin
+    r_phase <= r_phase + w_phase_inc;
+  end
 end
 
 // wrong — combinational always block
@@ -69,14 +72,16 @@ Since every `always` block is clocked (rule 2), always use `<=`. Never mix `=` a
 
 ```verilog
 // correct
-always @(posedge i_CLK) begin
-    r_phase  <= r_phase + w_phase_inc;
-    r_sample <= i_gate ? 16'h7FFF : 16'h0000;
+always @(posedge i_CLK)
+begin
+  r_phase  <= r_phase + w_phase_inc;
+  r_sample <= i_gate ? 16'h7FFF : 16'h0000;
 end
 
 // wrong — blocking assignment in clocked block
-always @(posedge i_CLK) begin
-    r_phase  = r_phase + w_phase_inc;
+always @(posedge i_CLK)
+begin
+  r_phase  = r_phase + w_phase_inc;
 end
 ```
 
@@ -97,28 +102,64 @@ r_byte  <= 255;
 o_gate  <= 1;
 ```
 
-### 6. begin/end on every if/else and case branch
+### 6. Allman-style begin/end; 2-space indent
 
-Wrap every branch body, even single-line ones. Prevents the silent bug where adding a second line accidentally falls outside an unbraced condition.
+Every branch body (`if`, `else`, `else if`, `case` arm, `always`, `initial`, `for`) gets a `begin`/`end` even when it contains only one statement. `begin` goes on its own line at the same indent level as the controlling statement. `end` is always on its own line. Indent the block body 2 spaces relative to the `begin`. Never use tabs.
 
 ```verilog
 // correct
+if (i_RX_DV)
+begin
+  r_state <= IDLE;
+end
+
+always @(posedge i_CLK)
+begin
+  if (w_lrck_edge)
+  begin
+    r_bit_pos <= 5'd0;
+  end
+  else if (w_sclk_fall)
+  begin
+    r_bit_pos <= r_bit_pos + 5'd1;
+  end
+end
+
+// wrong — no begin/end
+if (i_RX_DV)
+    r_state <= IDLE;
+
+// wrong — begin on same line as controlling statement (K&R style)
 if (i_RX_DV) begin
     r_state <= IDLE;
 end
-
-if (w_lrck_edge) begin
-    r_bit_pos <= 5'd0;
-end else if (w_sclk_fall) begin
-    r_bit_pos <= r_bit_pos + 5'd1;
-end
-
-// wrong
-if (i_RX_DV)
-    r_state <= IDLE;
 ```
 
-### 7. _L suffix for active-low signals
+### 7. Blank lines around `always` and `initial` blocks
+
+Every `always` block must be preceded by a blank line and followed by a blank line after its closing `end`. Same rule applies to `initial` blocks at module scope.
+
+```verilog
+// correct
+  reg [31:0] r_phase = 32'd0;
+
+  always @(posedge i_CLK)
+  begin
+    r_phase <= r_phase + w_phase_inc;
+  end
+
+  assign o_sample = r_sample;
+
+// wrong — missing blank lines
+  reg [31:0] r_phase = 32'd0;
+  always @(posedge i_CLK)
+  begin
+    r_phase <= r_phase + w_phase_inc;
+  end
+  assign o_sample = r_sample;
+```
+
+### 8. _L suffix for active-low signals
 
 Any signal that is asserted low gets an `_L` suffix:
 
@@ -127,7 +168,7 @@ input  i_Rst_L,    // active-low reset
 output o_CS_L      // active-low chip select
 ```
 
-### 8. localparam for FSM states and local constants
+### 9. localparam for FSM states and local constants
 
 Use `localparam` (not `` `define ``) for values scoped to a single module — FSM state names, local timeouts, magic counts. `localparam` cannot be overridden from outside the module, which is the correct behavior for internal constants. Use `parameter` only for values that should be overridable at instantiation (e.g. `CLKS_PER_BIT`).
 

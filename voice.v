@@ -48,8 +48,10 @@ module voice (
   reg [31:0] r_phase  = 32'd0;
   reg [15:0] r_sample = 16'd0;
 
-  always @(posedge i_CLK) begin
-    if (i_DV) begin
+  always @(posedge i_CLK)
+  begin
+    if (i_DV)
+    begin
       r_phase  <= r_phase + w_phase_inc;
       r_sample <= r_wave_rom[{i_wave, r_phase[31:24]}];
     end
