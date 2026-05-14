@@ -13,50 +13,81 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 ## Current State
 
-- I2S audio pipeline fully implemented and confirmed working on hardware
-- Outputs a 440 Hz (A4) square wave tone via the CS4344 DAC
-- SW1 button toggles tone on/off
-- LEDs blink at divided clock rates as a visual heartbeat
-- **UART modules integrated** — `UART_RX.v` and `UART_TX.v` sourced from [nandland/UART](https://github.com/nandland/UART) and added to the project
-- **UART loopback test verified on hardware** — fabric loopback (`o_TX_Serial` → `i_RX_Serial`) transmits `0x55` ('U') every second; LEDs show `1 0 1 0` pattern on success; confirmed via serial terminal at 115200 baud
+- I2S audio pipeline confirmed working on hardware (CS4344 DAC via PMOD I2S2)
+- **UART-controlled synth** — play notes from a PC keyboard over USB serial at 115200 baud
+- Phase accumulator oscillator — square wave, chromatic scale across octaves 0–7
+- Ableton Computer MIDI Keyboard layout (see [Playing the Synth](#playing-the-synth) below)
+- LED1 = gate (lit when a note is playing), LED2–4 = current octave in binary
 
-> **Currently loaded:** UART loopback test. Next commit restores the synth with UART RX command handling wired in.
+## Playing the Synth
 
-## Roadmap
+Connect a serial terminal to the Go Board at **115200 8N1** and type keys to play notes.
 
-1. **UART control** — play and control the synth from a PC keyboard over USB serial
-2. **Multi-note** — map UART keys (and physical switches) to a full octave of pitches
-3. **Wavetable sine oscillator** — replace square wave with a ROM-based sine lookup
-4. **ADSR envelope** — attack/decay/sustain/release shaping per note
-5. **Polyphony** — multiple simultaneous voices
-6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
-7. **Effects** — reverb, filter, etc. (stretch)
+### Quick start
 
-## Next Up: UART → Synth Integration
+```bash
+# Find the port first
+python -m serial.tools.list_ports
 
-UART modules are in and verified. Next step is restoring the synth with live UART control:
+# Open interactive terminal (exit with Ctrl+])
+python -m serial.tools.miniterm COM3 115200
 
-1. Restore I2S audio pipeline in `synth_top.v` alongside the UART RX module
-2. Wire received bytes into a command decoder — case statement maps ASCII keys to note frequencies
-3. Add a testbench that bit-bangs bytes onto RX and verifies the correct audio sample appears at the I2S output
+# Run the automated scale test
+python hw_test.py
 
-**Planned command set — Ableton Computer MIDI Keyboard layout:**
+# Send a single note
+python hw_test.py --send h
+```
+
+### Key layout — Ableton Computer MIDI Keyboard
+
+The layout mirrors Ableton Live's Computer MIDI Keyboard. White keys on the home row, black keys on the row above:
+
+```
+  w   e       t   y   u
+a   s   d   f   g   h   j   k
+C  C#   D  D#   E   F  F#   G  G#   A  A#   B   C+
+```
 
 | Key | Note | Key | Note |
 |-----|------|-----|------|
-| `a` | C | `w` | C# |
-| `s` | D | `e` | D# |
-| `d` | E | | |
-| `f` | F | `t` | F# |
-| `g` | G | `y` | G# |
-| `h` | A | `u` | A# |
-| `j` | B | | |
-| `k` | C (octave up) | | |
+| `a` | C  | `w` | C#  |
+| `s` | D  | `e` | D#  |
+| `d` | E  |     |     |
+| `f` | F  | `t` | F#  |
+| `g` | G  | `y` | G#  |
+| `h` | A  | `u` | A#  |
+| `j` | B  |     |     |
+| `k` | C (one octave up) | | |
 
 | Key | Action |
 |-----|--------|
 | `z` | Octave down |
 | `x` | Octave up |
+| `space` | Gate toggle (mute / unmute) |
+
+### LEDs during playback
+
+| LED | Meaning |
+|-----|---------|
+| LED1 | Gate — lit when a note is active |
+| LED2 | Octave bit 0 (LSB) |
+| LED3 | Octave bit 1 |
+| LED4 | Octave bit 2 (MSB) |
+
+Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
+
+---
+
+## Roadmap
+
+1. ~~**UART control**~~ ✓ — Ableton-layout keyboard over USB serial, confirmed on hardware
+2. **Modular refactor** — split `synth_top.v` into `uart_top`, `osc`, and `i2s_tx` sub-modules
+3. **Wavetable sine oscillator** — replace square wave with a ROM-based sine lookup
+4. **ADSR envelope** — attack/decay/sustain/release shaping per note
+5. **Polyphony** — multiple simultaneous voices
+6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
+7. **Effects** — reverb, filter, etc. (stretch)
 
 ---
 
@@ -76,7 +107,15 @@ Run a build — APIO auto-downloads `oss-cad-suite`, `examples`, and `definition
 apio build
 ```
 
-### 3. Install the Go Board USB driver
+### 3. Install pyserial (for `hw_test.py` and `miniterm`)
+
+pyserial ships with APIO's Python environment. If you need it standalone:
+
+```bash
+pip install pyserial
+```
+
+### 4. Install the Go Board USB driver
 
 Plug in the Go Board, then run:
 
@@ -90,7 +129,7 @@ In the Zadig window that opens:
 3. Click **Replace Driver** and wait for completion
 4. Close Zadig, then unplug and replug the board
 
-### 4. Flash and verify
+### 5. Flash and verify
 
 ```bash
 apio upload
@@ -102,11 +141,22 @@ apio devices scan-usb   # if upload fails, use this to confirm the board is visi
 ## Common Commands
 
 ```bash
-apio build              # synthesize bitstream
-apio test               # run self-checking testbench (no GUI)
-apio sim                # run testbench + open GTKWave for waveform inspection
-apio upload             # build and flash to board
-apio devices scan-usb   # list connected USB devices
+# Build / flash
+apio build                          # synthesize bitstream
+apio upload                         # build and flash to board
+apio devices scan-usb               # list connected USB devices
+
+# Simulation / test
+apio test                           # run all self-checking testbenches
+apio sim synth_top_tb.v             # open synth_top waveform in GTKWave
+apio sim uart_cmd_tb.v              # open uart_cmd waveform in GTKWave
+
+# Serial / hardware
+python -m serial.tools.list_ports   # find the Go Board's COM port
+python -m serial.tools.miniterm COM3 115200   # interactive terminal
+python hw_test.py                   # automated scale + octave + gate test
+python hw_test.py --port COM4       # override port
+python hw_test.py --send h          # send a single key
 ```
 
 ---
@@ -127,10 +177,15 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 
 | File | Description |
 |------|-------------|
-| `synth_top.v` | Top-level design (currently: UART loopback test) |
+| `synth_top.v` | Top-level design — I2S audio + UART command handling |
+| `uart_top.v` | UART wiring module — instantiates UART_RX, UART_TX, uart_cmd |
+| `uart_cmd.v` | Command decoder — maps ASCII keys to note/octave/gate signals |
 | `UART_RX.v` | UART receiver — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
 | `UART_TX.v` | UART transmitter — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
-| `synth_top_tb.v` | Self-checking testbench (`apio test`) |
+| `constants.vh` | Project-wide defines — clock bits, baud rate, synth defaults |
+| `synth_top_tb.v` | Self-checking testbench for full synth stack |
+| `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (36 tests, no UART timing needed) |
+| `hw_test.py` | Hardware test script — sends note sequences via pyserial |
 | `go-board.pcf` | Pin constraints for Go Board |
 | `apio.ini` | APIO project config |
 
@@ -168,6 +223,20 @@ assign w_DAC_Data = (bit_pos < 16) ? audio_sample[15 - bit_pos] : 1'b0;
 
 // Standard I2S (working):
 assign w_DAC_Data = (bit_pos >= 1 && bit_pos <= 16) ? audio_sample[16 - bit_pos] : 1'b0;
+```
+
+---
+
+### `apio sim` — multiple testbench files found
+
+**Symptom**: `apio sim` errors with "Multiple testbench files found".
+
+**Cause**: The project has more than one `*_tb.v` file.
+
+**Fix**: Specify the testbench explicitly:
+```bash
+apio sim synth_top_tb.v
+apio sim uart_cmd_tb.v
 ```
 
 ---
@@ -211,7 +280,7 @@ Error: No matching USB device.
 
 **Cause**: WinUSB driver not installed for the Go Board's FTDI chip. Required once per machine.
 
-**Fix**: See [First-Time Setup](#first-time-setup-new-windows-machine) → Step 3.
+**Fix**: See [First-Time Setup](#first-time-setup-new-windows-machine) → Step 4.
 
 ---
 
