@@ -9,7 +9,7 @@
 //   5. o_DV is one CLK cycle wide
 //   6. Left channel SDATA matches i_sample (1-bit I2S delay, MSB-first)
 //   7. Right channel SDATA matches i_sample (mono — same sample both channels)
-`include "constants.vh"
+`include "src/constants.vh"
 `timescale 1ns/1ps
 
 module i2s_tx_tb;
@@ -35,7 +35,7 @@ module i2s_tx_tb;
   );
 
   // ── Test infrastructure ──────────────────────────────────────────────────────
-  `include "test_utils.vh"
+  `include "sim/test_utils.vh"
 
   // Capture one 16-bit I2S word from the left channel (starts at LRCK fall).
   // Standard I2S: skip 1 delay bit, then sample MSB-first on SCLK rising edges.

@@ -3,7 +3,7 @@
 //
 // Drives i_RX_DV/i_RX_Byte directly — no UART bit-timing needed.
 // Tests every key mapping, octave clamping, gate toggle, wave select, and unknown-byte handling.
-`include "constants.vh"
+`include "src/constants.vh"
 `timescale 1ns/1ps
 
 module uart_cmd_tb;
@@ -35,7 +35,7 @@ module uart_cmd_tb;
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
-  `include "test_utils.vh"
+  `include "sim/test_utils.vh"
 
   // Pulse DV on negedge so the DUT sees stable inputs at the following posedge.
   task send_cmd;

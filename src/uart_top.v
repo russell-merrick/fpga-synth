@@ -2,7 +2,7 @@
 //
 // Exposes decoded synth controls (note/octave/gate/high) from the RX side
 // and raw TX control inputs for future use (echo, status messages, etc.).
-`include "constants.vh"
+`include "src/constants.vh"
 
 module uart_top (
     input        i_CLK,

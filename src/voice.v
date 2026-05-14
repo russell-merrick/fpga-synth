@@ -1,6 +1,6 @@
 // Phase accumulator oscillator — one synthesizer voice.
 // Advances phase and reads the wavetable on each i_DV pulse (from i2s_tx).
-`include "constants.vh"
+`include "src/constants.vh"
 
 module voice (
     input        i_CLK,
@@ -43,7 +43,7 @@ module voice (
   // Wavetable ROM — 4 waveforms × 256 entries × 16-bit signed PCM = 4 BRAMs.
   // Address: {i_wave[1:0], r_phase[31:24]}
   reg [15:0] r_wave_rom [0:1023];
-  initial $readmemh("wavetable.hex", r_wave_rom);
+  initial $readmemh("data/wavetable.hex", r_wave_rom);
 
   reg [31:0] r_phase  = 32'd0;
   reg [15:0] r_sample = 16'd0;

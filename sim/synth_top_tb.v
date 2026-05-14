@@ -1,7 +1,7 @@
 // Self-checking testbench for SynthTop (UART-controlled synth)
 // Run with: apio test
 //
-`include "constants.vh"
+`include "src/constants.vh"
 // Checks:
 //   1. MCLK period  = 2 CLK cycles  (12.5 MHz)
 //   2. SCLK period  = 8 CLK cycles  (3.125 MHz)
@@ -41,7 +41,7 @@ module synth_top_tb;
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
-  `include "test_utils.vh"
+  `include "sim/test_utils.vh"
 
   // ── UART bit-bang task ──────────────────────────────────────────────────────
   task send_byte;

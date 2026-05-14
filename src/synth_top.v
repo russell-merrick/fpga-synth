@@ -1,6 +1,6 @@
 // FPGA Synthesizer — top level
 // Nandland Go Board (iCE40 HX1K, 25 MHz)
-`include "constants.vh"
+`include "src/constants.vh"
 
 module SynthTop (
     input  CLK,

@@ -1,7 +1,7 @@
 // I2S transmitter — generates all I2S clocks and serializes one 16-bit sample per frame.
 // o_DV pulses for one CLK cycle on each LRCK falling edge; the upstream voice module
 // uses this to advance its phase accumulator and present the next sample.
-`include "constants.vh"
+`include "src/constants.vh"
 
 module i2s_tx (
     input        i_CLK,
