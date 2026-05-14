@@ -9,6 +9,7 @@
 module uart_cmd_tb;
 
   localparam CLK_PERIOD = 40;  // ns, 25 MHz
+  localparam TB_NAME    = "uart_cmd Testbench";
 
   reg       CLK       = 1'b0;
   reg       i_RX_DV   = 1'b0;
@@ -34,19 +35,7 @@ module uart_cmd_tb;
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
-  integer fail_count = 0;
-
-  task pass_fail;
-    input      ok;
-    input [8*48-1:0] name;
-    begin
-      if (ok) $display("  PASS: %0s", name);
-      else begin
-        $display("  FAIL: %0s", name);
-        fail_count = fail_count + 1;
-      end
-    end
-  endtask
+  `include "test_utils.vh"
 
   // Pulse DV on negedge so the DUT sees stable inputs at the following posedge.
   task send_cmd;
@@ -65,7 +54,7 @@ module uart_cmd_tb;
   // ── Tests ───────────────────────────────────────────────────────────────────
   initial begin
     $dumpvars(0, uart_cmd_tb);
-    $display("=== uart_cmd Testbench ===");
+    $display("=== %0s ===", TB_NAME);
 
     @(posedge CLK);  // let initial values settle
 
@@ -144,13 +133,7 @@ module uart_cmd_tb;
               "unknown byte: state unchanged");
 
     // ── Summary ───────────────────────────────────────────────────────────────
-    $display("==========================");
-    if (fail_count == 0)
-      $display("ALL TESTS PASSED");
-    else
-      $display("%0d TEST(S) FAILED", fail_count);
-    $display("==========================");
-    $finish;
+    finish_test;
   end
 
 endmodule

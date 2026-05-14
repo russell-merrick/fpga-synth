@@ -15,6 +15,7 @@
 module i2s_tx_tb;
 
   localparam CLK_PERIOD = 40;   // ns — 25 MHz sim clock
+  localparam TB_NAME    = "i2s_tx Testbench";
 
   reg        CLK      = 1'b0;
   reg [15:0] i_sample = 16'h0000;
@@ -34,19 +35,7 @@ module i2s_tx_tb;
   );
 
   // ── Test infrastructure ──────────────────────────────────────────────────────
-  integer fail_count = 0;
-
-  task pass_fail;
-    input      ok;
-    input [8*48-1:0] name;
-    begin
-      if (ok) $display("  PASS: %0s", name);
-      else begin
-        $display("  FAIL: %0s", name);
-        fail_count = fail_count + 1;
-      end
-    end
-  endtask
+  `include "test_utils.vh"
 
   // Capture one 16-bit I2S word from the left channel (starts at LRCK fall).
   // Standard I2S: skip 1 delay bit, then sample MSB-first on SCLK rising edges.
@@ -88,7 +77,7 @@ module i2s_tx_tb;
   // ── Tests ────────────────────────────────────────────────────────────────────
   initial begin
     $dumpvars(0, i2s_tx_tb);
-    $display("=== i2s_tx Testbench ===");
+    $display("=== %0s ===", TB_NAME);
 
     repeat(500) @(posedge CLK);   // let counter settle
 
@@ -137,13 +126,7 @@ module i2s_tx_tb;
     pass_fail(cap_right == 16'hA5C3, "right channel SDATA = 0xA5C3 (mono)");
 
     // ── Summary ───────────────────────────────────────────────────────────────
-    $display("==========================");
-    if (fail_count == 0)
-      $display("ALL TESTS PASSED");
-    else
-      $display("%0d TEST(S) FAILED", fail_count);
-    $display("==========================");
-    $finish;
+    finish_test;
   end
 
   // Watchdog: bail after 5M simulated clock cycles

@@ -17,8 +17,9 @@
 
 module synth_top_tb;
 
-  localparam CLK_PERIOD  = 40;              // ns — 25 MHz sim clock
+  localparam CLK_PERIOD   = 40;              // ns — 25 MHz sim clock
   localparam CLKS_PER_BIT = `CLKS_PER_BIT; // from constants.vh
+  localparam TB_NAME      = "SynthTop Testbench";
 
   reg CLK = 1'b0;
   reg RX  = 1'b1;   // UART idle high
@@ -40,19 +41,7 @@ module synth_top_tb;
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
-  integer fail_count = 0;
-
-  task pass_fail;
-    input      ok;
-    input [8*48-1:0] name;
-    begin
-      if (ok) $display("  PASS: %0s", name);
-      else  begin
-        $display("  FAIL: %0s", name);
-        fail_count = fail_count + 1;
-      end
-    end
-  endtask
+  `include "test_utils.vh"
 
   // ── UART bit-bang task ──────────────────────────────────────────────────────
   task send_byte;
@@ -96,7 +85,7 @@ module synth_top_tb;
   // ── Tests ───────────────────────────────────────────────────────────────────
   initial begin
     $dumpvars(0, synth_top_tb);
-    $display("=== SynthTop Testbench ===");
+    $display("=== %0s ===", TB_NAME);
 
     repeat(500) @(posedge CLK);   // let counter settle
 
@@ -171,13 +160,7 @@ module synth_top_tb;
     pass_fail(dut.u_uart.u_cmd.o_wave == 2'd0, "UART '1' -> wave=sine");
 
     // ── Summary ───────────────────────────────────────────────────────────────
-    $display("==========================");
-    if (fail_count == 0)
-      $display("ALL TESTS PASSED");
-    else
-      $display("%0d TEST(S) FAILED", fail_count);
-    $display("==========================");
-    $finish;
+    finish_test;
   end
 
   // Watchdog: bail after 30M simulated clock cycles
