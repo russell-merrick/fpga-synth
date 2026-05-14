@@ -30,7 +30,7 @@ module voice (
 
 ### 2. No combinational always blocks
 
-`always` blocks are for sequential logic only — clocked on `posedge` (or `negedge` for active-low resets). Combinational logic goes in `assign` statements or wire/reg declarations outside always blocks.
+`always` blocks are for sequential logic only — clocked on `posedge` (or `negedge` for active-low resets). Combinational logic goes in `assign` statements outside always blocks.
 
 ```verilog
 // correct — combinational as assign
@@ -53,19 +53,105 @@ end
 
 ### 3. Constants in ALL_CAPS
 
-Defined constants (`` `define ``) use ALL_CAPS with underscores:
+`` `define `` macros and `localparam` names use ALL_CAPS with underscores:
 
 ```verilog
-`define CLKS_PER_BIT  217
-`define MCLK_BIT      0
-`define DEFAULT_OCTAVE 4
+`define CLKS_PER_BIT   217
+`define DEFAULT_OCTAVE  4
+
+localparam IDLE         = 3'b000;
+localparam RX_START_BIT = 3'b001;
 ```
+
+### 4. Non-blocking assignments in all sequential always blocks
+
+Since every `always` block is clocked (rule 2), always use `<=`. Never mix `=` and `<=` in the same always block — it causes simulation/synthesis mismatches.
+
+```verilog
+// correct
+always @(posedge i_CLK) begin
+    r_phase  <= r_phase + w_phase_inc;
+    r_sample <= i_gate ? 16'h7FFF : 16'h0000;
+end
+
+// wrong — blocking assignment in clocked block
+always @(posedge i_CLK) begin
+    r_phase  = r_phase + w_phase_inc;
+end
+```
+
+### 5. Explicit bit-width literals everywhere
+
+Always specify base and width. Prevents implicit truncation and width-mismatch warnings.
+
+```verilog
+// correct
+r_state <= 3'b000;
+r_byte  <= 8'hFF;
+r_count <= 4'd0;
+o_gate  <= 1'b1;
+
+// wrong
+r_state <= 0;
+r_byte  <= 255;
+o_gate  <= 1;
+```
+
+### 6. begin/end on every if/else and case branch
+
+Wrap every branch body, even single-line ones. Prevents the silent bug where adding a second line accidentally falls outside an unbraced condition.
+
+```verilog
+// correct
+if (i_RX_DV) begin
+    r_state <= IDLE;
+end
+
+if (w_lrck_edge) begin
+    r_bit_pos <= 5'd0;
+end else if (w_sclk_fall) begin
+    r_bit_pos <= r_bit_pos + 5'd1;
+end
+
+// wrong
+if (i_RX_DV)
+    r_state <= IDLE;
+```
+
+### 7. _L suffix for active-low signals
+
+Any signal that is asserted low gets an `_L` suffix:
+
+```verilog
+input  i_Rst_L,    // active-low reset
+output o_CS_L      // active-low chip select
+```
+
+### 8. localparam for FSM states and local constants
+
+Use `localparam` (not `` `define ``) for values scoped to a single module — FSM state names, local timeouts, magic counts. `localparam` cannot be overridden from outside the module, which is the correct behavior for internal constants. Use `parameter` only for values that should be overridable at instantiation (e.g. `CLKS_PER_BIT`).
+
+```verilog
+// correct — localparam for FSM states
+localparam IDLE     = 3'b000;
+localparam PLAYING  = 3'b001;
+localparam RELEASE  = 3'b010;
+
+// correct — parameter for overridable config
+module uart_rx #(parameter CLKS_PER_BIT = 217) ( ... );
+
+// wrong — `define for module-local state
+`define IDLE 3'b000
+```
+
+---
 
 ## Signal Naming
 
-| Prefix | Meaning       | Example          |
-|--------|---------------|------------------|
-| `i_`   | module input  | `i_DV`, `i_note` |
-| `o_`   | module output | `o_sample`       |
-| `r_`   | register (flip-flop) | `r_phase`, `r_ctr` |
-| `w_`   | wire (combinational) | `w_lrck_fall`, `w_phase_inc` |
+| Prefix | Meaning              | Example                       |
+|--------|----------------------|-------------------------------|
+| `i_`   | module input         | `i_DV`, `i_note`              |
+| `o_`   | module output        | `o_sample`                    |
+| `r_`   | register (flip-flop) | `r_phase`, `r_ctr`            |
+| `w_`   | wire (combinational) | `w_lrck_fall`, `w_phase_inc`  |
+| `_L`   | active-low signal    | `i_Rst_L`, `o_CS_L`           |
