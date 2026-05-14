@@ -19,8 +19,8 @@ module synth_top_tb;
   localparam CLK_PERIOD  = 40;              // ns — 25 MHz sim clock
   localparam CLKS_PER_BIT = `CLKS_PER_BIT; // from constants.vh
 
-  reg CLK = 0;
-  reg RX  = 1;   // UART idle high
+  reg CLK = 1'b0;
+  reg RX  = 1'b1;   // UART idle high
 
   always #(CLK_PERIOD/2) CLK = ~CLK;
 
@@ -58,13 +58,13 @@ module synth_top_tb;
     input [7:0] b;
     integer i;
     begin
-      RX = 0;                                          // start bit
+      RX = 1'b0;                                       // start bit
       repeat(CLKS_PER_BIT) @(posedge CLK);
       for (i = 0; i < 8; i = i + 1) begin
         RX = b[i];                                     // LSB first
         repeat(CLKS_PER_BIT) @(posedge CLK);
       end
-      RX = 1;                                          // stop bit
+      RX = 1'b1;                                       // stop bit
       repeat(CLKS_PER_BIT) @(posedge CLK);
       repeat(CLKS_PER_BIT) @(posedge CLK);            // inter-byte gap
     end
@@ -79,7 +79,7 @@ module synth_top_tb;
     begin
       @(negedge LRCK);
       @(posedge SCLK);           // delay bit — skip
-      sample = 0;
+      sample = 16'd0;
       for (j = 0; j < 16; j = j + 1) begin
         @(posedge SCLK);
         sample = {sample[14:0], SDATA};

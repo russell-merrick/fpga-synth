@@ -10,9 +10,9 @@ module uart_cmd_tb;
 
   localparam CLK_PERIOD = 40;  // ns, 25 MHz
 
-  reg       CLK       = 0;
-  reg       i_RX_DV   = 0;
-  reg [7:0] i_RX_Byte = 0;
+  reg       CLK       = 1'b0;
+  reg       i_RX_DV   = 1'b0;
+  reg [7:0] i_RX_Byte = 8'h00;
 
   wire [3:0] o_note;
   wire [2:0] o_octave;
@@ -51,11 +51,11 @@ module uart_cmd_tb;
     input [7:0] b;
     begin
       @(negedge CLK);
-      i_RX_DV   = 1;
+      i_RX_DV   = 1'b1;
       i_RX_Byte = b;
       @(posedge CLK);  // DUT captures here (non-blocking — outputs update end of step)
       @(negedge CLK);
-      i_RX_DV   = 0;
+      i_RX_DV   = 1'b0;
       @(posedge CLK);  // outputs stable from here on
     end
   endtask

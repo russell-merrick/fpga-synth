@@ -27,22 +27,32 @@ module uart_cmd (
   always @(posedge i_CLK) begin
     if (i_RX_DV) begin
       case (i_RX_Byte)
-        8'h61: begin o_note <= 4'd0;  o_high <= 0; o_gate <= 1; end  // a → C
-        8'h77: begin o_note <= 4'd1;  o_high <= 0; o_gate <= 1; end  // w → C#
-        8'h73: begin o_note <= 4'd2;  o_high <= 0; o_gate <= 1; end  // s → D
-        8'h65: begin o_note <= 4'd3;  o_high <= 0; o_gate <= 1; end  // e → D#
-        8'h64: begin o_note <= 4'd4;  o_high <= 0; o_gate <= 1; end  // d → E
-        8'h66: begin o_note <= 4'd5;  o_high <= 0; o_gate <= 1; end  // f → F
-        8'h74: begin o_note <= 4'd6;  o_high <= 0; o_gate <= 1; end  // t → F#
-        8'h67: begin o_note <= 4'd7;  o_high <= 0; o_gate <= 1; end  // g → G
-        8'h79: begin o_note <= 4'd8;  o_high <= 0; o_gate <= 1; end  // y → G#
-        8'h68: begin o_note <= 4'd9;  o_high <= 0; o_gate <= 1; end  // h → A
-        8'h75: begin o_note <= 4'd10; o_high <= 0; o_gate <= 1; end  // u → A#
-        8'h6A: begin o_note <= 4'd11; o_high <= 0; o_gate <= 1; end  // j → B
-        8'h6B: begin o_note <= 4'd0;  o_high <= 1; o_gate <= 1; end  // k → C+1oct
-        8'h7A: if (o_octave > 0) o_octave <= o_octave - 1;           // z → down
-        8'h78: if (o_octave < 7) o_octave <= o_octave + 1;           // x → up
-        8'h20: o_gate <= ~o_gate;                                      // space → toggle
+        8'h61: begin o_note <= 4'd0;  o_high <= 1'b0; o_gate <= 1'b1; end  // a → C
+        8'h77: begin o_note <= 4'd1;  o_high <= 1'b0; o_gate <= 1'b1; end  // w → C#
+        8'h73: begin o_note <= 4'd2;  o_high <= 1'b0; o_gate <= 1'b1; end  // s → D
+        8'h65: begin o_note <= 4'd3;  o_high <= 1'b0; o_gate <= 1'b1; end  // e → D#
+        8'h64: begin o_note <= 4'd4;  o_high <= 1'b0; o_gate <= 1'b1; end  // d → E
+        8'h66: begin o_note <= 4'd5;  o_high <= 1'b0; o_gate <= 1'b1; end  // f → F
+        8'h74: begin o_note <= 4'd6;  o_high <= 1'b0; o_gate <= 1'b1; end  // t → F#
+        8'h67: begin o_note <= 4'd7;  o_high <= 1'b0; o_gate <= 1'b1; end  // g → G
+        8'h79: begin o_note <= 4'd8;  o_high <= 1'b0; o_gate <= 1'b1; end  // y → G#
+        8'h68: begin o_note <= 4'd9;  o_high <= 1'b0; o_gate <= 1'b1; end  // h → A
+        8'h75: begin o_note <= 4'd10; o_high <= 1'b0; o_gate <= 1'b1; end  // u → A#
+        8'h6A: begin o_note <= 4'd11; o_high <= 1'b0; o_gate <= 1'b1; end  // j → B
+        8'h6B: begin o_note <= 4'd0;  o_high <= 1'b1; o_gate <= 1'b1; end  // k → C+1oct
+        8'h7A: begin
+          if (o_octave > 3'd0) begin
+            o_octave <= o_octave - 3'd1;
+          end
+        end  // z → down
+        8'h78: begin
+          if (o_octave < 3'd7) begin
+            o_octave <= o_octave + 3'd1;
+          end
+        end  // x → up
+        8'h20: begin
+          o_gate <= ~o_gate;
+        end  // space → toggle
       endcase
     end
   end

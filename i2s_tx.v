@@ -13,15 +13,16 @@ module i2s_tx (
     output        o_DV
 );
 
-  reg [31:0] r_ctr = 0;
-  always @(posedge i_CLK) r_ctr <= r_ctr + 1;
+  reg [31:0] r_ctr = 32'd0;
+  always @(posedge i_CLK) r_ctr <= r_ctr + 32'd1;
 
   assign o_MCLK = r_ctr[`MCLK_BIT];
   assign o_SCLK = r_ctr[`SCLK_BIT];
   wire   w_lrck = r_ctr[`LRCK_BIT];
   assign o_LRCK = w_lrck;
 
-  reg r_lrck_d = 0, r_sclk_d = 0;
+  reg r_lrck_d = 1'b0;
+  reg r_sclk_d = 1'b0;
   always @(posedge i_CLK) begin
     r_lrck_d <= w_lrck;
     r_sclk_d <= r_ctr[`SCLK_BIT];
@@ -31,12 +32,13 @@ module i2s_tx (
   wire w_sclk_fall = r_sclk_d & ~r_ctr[`SCLK_BIT];
 
   // Counts SCLK falling edges within each LRCK half-period; resets on every LRCK edge.
-  reg [4:0] r_bit_pos = 0;
+  reg [4:0] r_bit_pos = 5'd0;
   always @(posedge i_CLK) begin
-    if (w_lrck_edge)
-      r_bit_pos <= 0;
-    else if (w_sclk_fall)
-      r_bit_pos <= r_bit_pos + 1;
+    if (w_lrck_edge) begin
+      r_bit_pos <= 5'd0;
+    end else if (w_sclk_fall) begin
+      r_bit_pos <= r_bit_pos + 5'd1;
+    end
   end
 
   // Standard I2S: 1-bit delay after LRCK transition, then 16 bits MSB-first.

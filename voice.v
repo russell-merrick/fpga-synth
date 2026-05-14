@@ -39,8 +39,8 @@ module voice (
     (w_oct == 3'd6) ? (w_base_inc << 2) :
                       (w_base_inc << 3); // oct 7
 
-  reg [31:0] r_phase  = 0;
-  reg [15:0] r_sample = 0;
+  reg [31:0] r_phase  = 32'd0;
+  reg [15:0] r_sample = 16'd0;
 
   always @(posedge i_CLK) begin
     if (i_DV) begin

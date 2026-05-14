@@ -82,8 +82,8 @@ Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
 ## Roadmap
 
 1. ~~**UART control**~~ ✓ — Ableton-layout keyboard over USB serial, confirmed on hardware
-2. **Modular refactor** — split `synth_top.v` into `uart_top`, `osc`, and `i2s_tx` sub-modules
-3. **Wavetable sine oscillator** — replace square wave with a ROM-based sine lookup
+2. ~~**Modular refactor**~~ ✓ — `synth_top.v` is pure instantiation of `uart_top`, `voice`, `i2s_tx`
+3. **Wavetable sine oscillator** — replace square wave in `voice.v` with a ROM-based sine lookup
 4. **ADSR envelope** — attack/decay/sustain/release shaping per note
 5. **Polyphony** — multiple simultaneous voices
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
@@ -177,12 +177,15 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 
 | File | Description |
 |------|-------------|
-| `synth_top.v` | Top-level design — I2S audio + UART command handling |
-| `uart_top.v` | UART wiring module — instantiates UART_RX, UART_TX, uart_cmd |
+| `synth_top.v` | Top-level — pure instantiation of uart_top, voice, i2s_tx |
+| `uart_top.v` | UART wiring — instantiates UART_RX, UART_TX, uart_cmd |
 | `uart_cmd.v` | Command decoder — maps ASCII keys to note/octave/gate signals |
+| `voice.v` | Phase accumulator oscillator — produces a 16-bit PCM sample per LRCK period |
+| `i2s_tx.v` | I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample, pulses o_DV |
 | `UART_RX.v` | UART receiver — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
 | `UART_TX.v` | UART transmitter — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
 | `constants.vh` | Project-wide defines — clock bits, baud rate, synth defaults |
+| `CLAUDE.md` | Verilog coding conventions for this project |
 | `synth_top_tb.v` | Self-checking testbench for full synth stack |
 | `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (36 tests, no UART timing needed) |
 | `hw_test.py` | Hardware test script — sends note sequences via pyserial |
