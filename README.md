@@ -152,8 +152,8 @@ apio devices scan-usb               # list connected USB devices
 
 # Simulation / test
 apio test                           # run all self-checking testbenches
-apio sim synth_top_tb.v             # open synth_top waveform in GTKWave
-apio sim uart_cmd_tb.v              # open uart_cmd waveform in GTKWave
+apio sim sim/synth_top_tb.v         # open synth_top waveform in GTKWave
+apio sim sim/uart_cmd_tb.v          # open uart_cmd waveform in GTKWave
 
 # Serial / hardware
 python -m serial.tools.list_ports   # find the Go Board's COM port
@@ -177,26 +177,39 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 
 ---
 
-## Project Files
+## Project Layout
 
-| File | Description |
-|------|-------------|
-| `synth_top.v` | Top-level — pure instantiation of uart_top, voice, i2s_tx |
-| `uart_top.v` | UART wiring — instantiates UART_RX, UART_TX, uart_cmd |
-| `uart_cmd.v` | Command decoder — maps ASCII keys to note/octave/gate signals |
-| `voice.v` | Phase accumulator oscillator — produces a 16-bit PCM sample per LRCK period |
-| `i2s_tx.v` | I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample, pulses o_DV |
-| `UART_RX.v` | UART receiver — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
-| `UART_TX.v` | UART transmitter — 8N1, parameterized `CLKS_PER_BIT` (source: nandland/UART) |
-| `constants.vh` | Project-wide defines — clock bits, baud rate, synth defaults |
-| `CLAUDE.md` | Verilog coding conventions for this project |
-| `synth_top_tb.v` | Self-checking testbench for full synth stack |
-| `uart_cmd_tb.v` | Self-checking testbench for uart_cmd (no UART timing needed) |
-| `scripts/hw_test.py` | Hardware test script — sends note sequences via pyserial |
-| `scripts/gen_wavetable.py` | Generates `wavetable.hex` — 4 waveforms × 256 entries of 16-bit PCM |
-| `wavetable.hex` | 1024-entry ROM image loaded by `voice.v` at synthesis |
-| `go-board.pcf` | Pin constraints for Go Board |
-| `apio.ini` | APIO project config |
+```
+src/        Own HDL source
+  synth_top.v       Top-level — pure instantiation of uart_top, voice, i2s_tx
+  uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd
+  uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate signals
+  voice.v           Phase accumulator oscillator — 16-bit PCM sample per LRCK period
+  i2s_tx.v          I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample
+  constants.vh      Project-wide defines — clock bits, baud rate, synth defaults
+
+lib/        Vendor HDL (unmodified, source: nandland/UART)
+  UART_RX.v         8N1 UART receiver, parameterized CLKS_PER_BIT
+  UART_TX.v         8N1 UART transmitter, parameterized CLKS_PER_BIT
+
+sim/        Simulation
+  synth_top_tb.v    Self-checking testbench for full synth stack
+  uart_cmd_tb.v     Self-checking testbench for uart_cmd (no UART timing needed)
+  i2s_tx_tb.v       Self-checking testbench for I2S transmitter
+  test_utils.vh     Shared pass_fail / finish_test tasks
+  uart_cmd_tb.gtkw  GTKWave signal layout for uart_cmd
+
+data/
+  wavetable.hex     1024-entry ROM image (4 waveforms × 256 × 16-bit PCM)
+
+scripts/
+  gen_wavetable.py  Generates data/wavetable.hex
+  hw_test.py        Hardware test — sends note sequences via pyserial
+
+go-board.pcf        Pin constraints for Nandland Go Board
+apio.ini            APIO project config
+CLAUDE.md           Verilog coding conventions for this project
+```
 
 ---
 
@@ -244,8 +257,8 @@ assign w_DAC_Data = (bit_pos >= 1 && bit_pos <= 16) ? audio_sample[16 - bit_pos]
 
 **Fix**: Specify the testbench explicitly:
 ```bash
-apio sim synth_top_tb.v
-apio sim uart_cmd_tb.v
+apio sim sim/synth_top_tb.v
+apio sim sim/uart_cmd_tb.v
 ```
 
 ---
@@ -258,7 +271,8 @@ apio sim uart_cmd_tb.v
 
 **Fix**: Remove `$dumpfile()` — APIO passes the VCD path via command line (`vvp -dumpfile=`). Only call `$dumpvars()`:
 ```verilog
-initial begin
+initial
+begin
   $dumpvars(0, synth_top_tb);
   // ...
 end
