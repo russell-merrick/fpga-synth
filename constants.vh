@@ -17,3 +17,4 @@
 // ── Synth defaults ────────────────────────────────────────────────────────────
 `define DEFAULT_NOTE    9           // 0=C … 9=A … 11=B
 `define DEFAULT_OCTAVE  4
+`define DEFAULT_WAVE    2'd0        // 0=sine 1=triangle 2=sawtooth 3=square

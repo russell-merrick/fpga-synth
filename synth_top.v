@@ -17,6 +17,7 @@ module SynthTop (
   wire [2:0] w_octave;
   wire       w_gate;
   wire       w_high;
+  wire [1:0] w_wave;
 
   uart_top u_uart (
     .i_CLK       (CLK),
@@ -27,7 +28,8 @@ module SynthTop (
     .o_note      (w_note),
     .o_octave    (w_octave),
     .o_gate      (w_gate),
-    .o_high      (w_high)
+    .o_high      (w_high),
+    .o_wave      (w_wave)
   );
 
   wire [15:0] w_sample;
@@ -39,6 +41,7 @@ module SynthTop (
     .i_octave (w_octave),
     .i_gate   (w_gate),
     .i_high   (w_high),
+    .i_wave   (w_wave),
     .i_DV     (w_DV),
     .o_sample (w_sample)
   );

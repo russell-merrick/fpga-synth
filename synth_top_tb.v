@@ -9,9 +9,10 @@
 //   4. UART 'a' → C4 selected, gate high
 //   5. UART 'x' → octave increments
 //   6. UART 'z' → octave decrements
-//   7. UART 'h' → A4, I2S sample is 0x7FFF or 0x8000 (square wave)
+//   7. UART 'h' → A4, consecutive samples differ (oscillator running)
 //   8. UART ' ' → gate toggles off/on
 //   9. UART 'k' → C + r_high flag, cleared by next note key
+//  10. UART '2'/'1' → wave select passes through hierarchy
 `timescale 1ns/1ps
 
 module synth_top_tb;
@@ -159,6 +160,15 @@ module synth_top_tb;
     repeat(600) @(posedge CLK);
     pass_fail(dut.u_uart.u_cmd.o_note == 4'd2 && dut.u_uart.u_cmd.o_high == 1'b0,
               "UART 's' after 'k' -> note=D, r_high=0");
+
+    // ── 10. Wave select passes through hierarchy ──────────────────────────────
+    send_byte(8'h32);   // '2' → triangle
+    repeat(600) @(posedge CLK);
+    pass_fail(dut.u_uart.u_cmd.o_wave == 2'd1, "UART '2' -> wave=triangle");
+
+    send_byte(8'h31);   // '1' → sine
+    repeat(600) @(posedge CLK);
+    pass_fail(dut.u_uart.u_cmd.o_wave == 2'd0, "UART '1' -> wave=sine");
 
     // ── Summary ───────────────────────────────────────────────────────────────
     $display("==========================");

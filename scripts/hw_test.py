@@ -4,9 +4,9 @@ Sends UART commands to the Go Board and prints what was sent.
 The human confirms audio / LED responses.
 
 Usage:
-    python hw_test.py              # run full scale test
-    python hw_test.py --port COM4  # override port
-    python hw_test.py --send a     # send a single key
+    python scripts/hw_test.py              # run full scale + waveform test
+    python scripts/hw_test.py --port COM4  # override port
+    python scripts/hw_test.py --send a     # send a single key
 """
 
 import serial
@@ -26,6 +26,8 @@ NOTE_NAMES = {
     'k': 'C+1oct',
     'z': 'octave down', 'x': 'octave up',
     ' ': 'gate toggle',
+    '1': 'wave: sine', '2': 'wave: triangle',
+    '3': 'wave: sawtooth', '4': 'wave: square',
 }
 
 def send(ser, char, label=None):
@@ -65,10 +67,16 @@ def run_scale(ser):
     send(ser, 'h')   # A
     time.sleep(CHAR_GAP)
 
+    print("\n--- Waveform sweep (A4, each waveform) ---")
+    for key in ['1', '2', '3', '4']:
+        send(ser, key)
+        time.sleep(CHAR_GAP)
+    send(ser, '1')   # back to sine
+
     print("\n--- Gate off ---")
     send(ser, ' ')
 
-    print("\nDone. Confirm: chromatic scale, octave shift, gate toggle, A4 at end, then silence.")
+    print("\nDone. Confirm: scale, octave shift, gate toggle, then 4 waveforms on A4.")
 
 def main():
     parser = argparse.ArgumentParser()

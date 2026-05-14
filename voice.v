@@ -8,6 +8,7 @@ module voice (
     input  [2:0] i_octave,
     input        i_gate,
     input        i_high,
+    input  [1:0] i_wave,    // 0=sine 1=triangle 2=sawtooth 3=square
     input        i_DV,
     output [15:0] o_sample
 );
@@ -39,9 +40,10 @@ module voice (
     (w_oct == 3'd6) ? (w_base_inc << 2) :
                       (w_base_inc << 3); // oct 7
 
-  // Sine wavetable — 256 × 16-bit signed PCM, inferred as one BRAM.
-  reg [15:0] r_sine_rom [0:255];
-  initial $readmemh("sine.hex", r_sine_rom);
+  // Wavetable ROM — 4 waveforms × 256 entries × 16-bit signed PCM = 4 BRAMs.
+  // Address: {i_wave[1:0], r_phase[31:24]}
+  reg [15:0] r_wave_rom [0:1023];
+  initial $readmemh("wavetable.hex", r_wave_rom);
 
   reg [31:0] r_phase  = 32'd0;
   reg [15:0] r_sample = 16'd0;
@@ -49,7 +51,7 @@ module voice (
   always @(posedge i_CLK) begin
     if (i_DV) begin
       r_phase  <= r_phase + w_phase_inc;
-      r_sample <= r_sine_rom[r_phase[31:24]];
+      r_sample <= r_wave_rom[{i_wave, r_phase[31:24]}];
     end
   end
 

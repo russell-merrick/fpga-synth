@@ -19,7 +19,8 @@ module uart_top (
     output [3:0] o_note,
     output [2:0] o_octave,
     output       o_gate,
-    output       o_high
+    output       o_high,
+    output [1:0] o_wave
 );
 
   wire       w_rx_dv;
@@ -50,7 +51,8 @@ module uart_top (
     .o_note    (o_note),
     .o_octave  (o_octave),
     .o_gate    (o_gate),
-    .o_high    (o_high)
+    .o_high    (o_high),
+    .o_wave    (o_wave)
   );
 
 endmodule

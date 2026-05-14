@@ -18,6 +18,7 @@ module uart_cmd_tb;
   wire [2:0] o_octave;
   wire       o_gate;
   wire       o_high;
+  wire [1:0] o_wave;
 
   always #(CLK_PERIOD/2) CLK = ~CLK;
 
@@ -28,7 +29,8 @@ module uart_cmd_tb;
     .o_note    (o_note),
     .o_octave  (o_octave),
     .o_gate    (o_gate),
-    .o_high    (o_high)
+    .o_high    (o_high),
+    .o_wave    (o_wave)
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
@@ -71,8 +73,9 @@ module uart_cmd_tb;
     pass_fail(o_note   == `DEFAULT_NOTE   &&
               o_octave == `DEFAULT_OCTAVE &&
               o_gate   == 1'b1            &&
-              o_high   == 1'b0,
-              "defaults: note=A oct=4 gate=1 high=0");
+              o_high   == 1'b0            &&
+              o_wave   == `DEFAULT_WAVE,
+              "defaults: note=A oct=4 gate=1 high=0 wave=sine");
 
     // ── 2. All 13 note keys ───────────────────────────────────────────────────
     send_cmd(8'h61); pass_fail(o_note == 4'd0  && !o_high && o_gate, "a → C  (note  0)");
@@ -127,7 +130,14 @@ module uart_cmd_tb;
     send_cmd(8'h7A); pass_fail(o_octave == 3'd0, "z → octave 0");
     send_cmd(8'h7A); pass_fail(o_octave == 3'd0, "z at 0 → floor clamp");
 
-    // ── 7. Unknown byte leaves all state unchanged ────────────────────────────
+    // ── 7. Wave select (1–4) ─────────────────────────────────────────────────
+    send_cmd(8'h31); pass_fail(o_wave == 2'd0, "1 -> sine");
+    send_cmd(8'h32); pass_fail(o_wave == 2'd1, "2 -> triangle");
+    send_cmd(8'h33); pass_fail(o_wave == 2'd2, "3 -> sawtooth");
+    send_cmd(8'h34); pass_fail(o_wave == 2'd3, "4 -> square");
+    send_cmd(8'h31); pass_fail(o_wave == 2'd0, "1 -> back to sine");
+
+    // ── 8. Unknown byte leaves all state unchanged ────────────────────────────
     send_cmd(8'h68);   // h → A, note=9
     send_cmd(8'hFF);   // unknown
     pass_fail(o_note == 4'd9 && o_octave == 3'd0 && o_gate == 1'b1,

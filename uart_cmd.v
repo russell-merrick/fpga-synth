@@ -14,7 +14,8 @@ module uart_cmd (
     output reg [3:0] o_note,      // 0–11
     output reg [2:0] o_octave,    // 0–7
     output reg       o_gate,      // 1 = playing
-    output reg       o_high       // 1 = 'k' key (C one octave above o_octave)
+    output reg       o_high,      // 1 = 'k' key (C one octave above o_octave)
+    output reg [1:0] o_wave       // 0=sine 1=triangle 2=sawtooth 3=square
 );
 
   initial begin
@@ -22,6 +23,7 @@ module uart_cmd (
     o_octave = `DEFAULT_OCTAVE;
     o_gate   = 1'b1;
     o_high   = 1'b0;
+    o_wave   = `DEFAULT_WAVE;
   end
 
   always @(posedge i_CLK) begin
@@ -53,6 +55,18 @@ module uart_cmd (
         8'h20: begin
           o_gate <= ~o_gate;
         end  // space → toggle
+        8'h31: begin
+          o_wave <= 2'd0;
+        end  // 1 → sine
+        8'h32: begin
+          o_wave <= 2'd1;
+        end  // 2 → triangle
+        8'h33: begin
+          o_wave <= 2'd2;
+        end  // 3 → sawtooth
+        8'h34: begin
+          o_wave <= 2'd3;
+        end  // 4 → square
       endcase
     end
   end
