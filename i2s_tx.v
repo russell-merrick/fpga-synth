@@ -4,7 +4,7 @@
 `include "constants.vh"
 
 module i2s_tx (
-    input        CLK,
+    input        i_CLK,
     input  [15:0] i_sample,
     output        o_MCLK,
     output        o_LRCK,
@@ -14,7 +14,7 @@ module i2s_tx (
 );
 
   reg [31:0] r_ctr = 0;
-  always @(posedge CLK) r_ctr <= r_ctr + 1;
+  always @(posedge i_CLK) r_ctr <= r_ctr + 1;
 
   assign o_MCLK = r_ctr[`MCLK_BIT];
   assign o_SCLK = r_ctr[`SCLK_BIT];
@@ -22,7 +22,7 @@ module i2s_tx (
   assign o_LRCK = w_lrck;
 
   reg r_lrck_d = 0, r_sclk_d = 0;
-  always @(posedge CLK) begin
+  always @(posedge i_CLK) begin
     r_lrck_d <= w_lrck;
     r_sclk_d <= r_ctr[`SCLK_BIT];
   end
@@ -32,7 +32,7 @@ module i2s_tx (
 
   // Counts SCLK falling edges within each LRCK half-period; resets on every LRCK edge.
   reg [4:0] r_bit_pos = 0;
-  always @(posedge CLK) begin
+  always @(posedge i_CLK) begin
     if (w_lrck_edge)
       r_bit_pos <= 0;
     else if (w_sclk_fall)

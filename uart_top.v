@@ -5,7 +5,7 @@
 `include "constants.vh"
 
 module uart_top (
-    input        CLK,
+    input        i_CLK,
 
     // Physical UART pins
     input        i_RX_Serial,
@@ -27,7 +27,7 @@ module uart_top (
 
   UART_RX #(.CLKS_PER_BIT(`CLKS_PER_BIT)) u_rx (
     .i_Rst_L    (1'b1),
-    .i_Clock    (CLK),
+    .i_Clock    (i_CLK),
     .i_RX_Serial(i_RX_Serial),
     .o_RX_DV    (w_rx_dv),
     .o_RX_Byte  (w_rx_byte)
@@ -35,7 +35,7 @@ module uart_top (
 
   UART_TX #(.CLKS_PER_BIT(`CLKS_PER_BIT)) u_tx (
     .i_Rst_L    (1'b1),
-    .i_Clock    (CLK),
+    .i_Clock    (i_CLK),
     .i_TX_DV    (i_TX_DV),
     .i_TX_Byte  (i_TX_Byte),
     .o_TX_Active(),
@@ -44,7 +44,7 @@ module uart_top (
   );
 
   uart_cmd u_cmd (
-    .CLK       (CLK),
+    .i_CLK     (i_CLK),
     .i_RX_DV   (w_rx_dv),
     .i_RX_Byte (w_rx_byte),
     .o_note    (o_note),

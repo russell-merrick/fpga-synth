@@ -7,7 +7,7 @@
 `include "constants.vh"
 
 module uart_cmd (
-    input            CLK,
+    input            i_CLK,
     input            i_RX_DV,     // one-cycle pulse when a byte is ready
     input  [7:0]     i_RX_Byte,   // received byte
 
@@ -24,7 +24,7 @@ module uart_cmd (
     o_high   = 1'b0;
   end
 
-  always @(posedge CLK) begin
+  always @(posedge i_CLK) begin
     if (i_RX_DV) begin
       case (i_RX_Byte)
         8'h61: begin o_note <= 4'd0;  o_high <= 0; o_gate <= 1; end  // a → C

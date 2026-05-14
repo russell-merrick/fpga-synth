@@ -22,7 +22,7 @@ module uart_cmd_tb;
   always #(CLK_PERIOD/2) CLK = ~CLK;
 
   uart_cmd dut (
-    .CLK       (CLK),
+    .i_CLK     (CLK),
     .i_RX_DV   (i_RX_DV),
     .i_RX_Byte (i_RX_Byte),
     .o_note    (o_note),

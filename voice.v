@@ -3,7 +3,7 @@
 `include "constants.vh"
 
 module voice (
-    input        CLK,
+    input        i_CLK,
     input  [3:0] i_note,
     input  [2:0] i_octave,
     input        i_gate,
@@ -42,7 +42,7 @@ module voice (
   reg [31:0] r_phase  = 0;
   reg [15:0] r_sample = 0;
 
-  always @(posedge CLK) begin
+  always @(posedge i_CLK) begin
     if (i_DV) begin
       r_phase  <= r_phase + w_phase_inc;
       r_sample <= i_gate ? (r_phase[31] ? 16'h7FFF : 16'h8000) : 16'h0000;
