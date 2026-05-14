@@ -1,0 +1,18 @@
+[*] GTKWave display configuration for 'apio sim uart_cmd_tb.v'
+[*] THIS FILE WAS GENERATED AUTOMATICALLY BY APIO.
+[*] DO NOT EDIT IT MANUALLY!
+[*] To customize this file, run 'apio sim uart_cmd_tb.v'
+[*] and save the file from GTKWave.
+
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+
+[*]
+uart_cmd_tb.CLK
+uart_cmd_tb.CLK_PERIOD
+uart_cmd_tb.fail_count[31:0]
+uart_cmd_tb.i_RX_Byte[7:0]
+uart_cmd_tb.i_RX_DV
+uart_cmd_tb.o_gate
+uart_cmd_tb.o_high
+uart_cmd_tb.o_note[3:0]
+uart_cmd_tb.o_octave[2:0]

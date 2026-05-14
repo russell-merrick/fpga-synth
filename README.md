@@ -40,13 +40,23 @@ UART modules are in and verified. Next step is restoring the synth with live UAR
 2. Wire received bytes into a command decoder — case statement maps ASCII keys to note frequencies
 3. Add a testbench that bit-bangs bytes onto RX and verifies the correct audio sample appears at the I2S output
 
-**Planned command set (single ASCII bytes):**
+**Planned command set — Ableton Computer MIDI Keyboard layout:**
 
-| Key(s) | Action |
-|--------|--------|
-| `a s d f g h j` | Play notes C D E F G A B |
-| `z` | Mute / unmute |
-| `1` / `2` | Octave down / up |
+| Key | Note | Key | Note |
+|-----|------|-----|------|
+| `a` | C | `w` | C# |
+| `s` | D | `e` | D# |
+| `d` | E | | |
+| `f` | F | `t` | F# |
+| `g` | G | `y` | G# |
+| `h` | A | `u` | A# |
+| `j` | B | | |
+| `k` | C (octave up) | | |
+
+| Key | Action |
+|-----|--------|
+| `z` | Octave down |
+| `x` | Octave up |
 
 ---
 
