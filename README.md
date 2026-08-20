@@ -6,10 +6,11 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 | Component | Details |
 |-----------|---------|
-| FPGA board | Nandland Go Board (iCE40 HX1K, 25 MHz oscillator, 4 LEDs, 4 switches, 4 buttons) |
-| Audio DAC | Digilent PMOD I2S2 (CS4344) — plugged into PMOD pins 1–4 (left column) |
+| FPGA board | **Go Board** (iCE40 HX1K) or **IceSugar-Pro** (ECP5 LFE5U-25F). Both 25 MHz. |
+| Audio DAC | Digilent PMOD I2S2 (CS4344) — Go Board PMOD pins 1–4, or IceSugar-Pro **P4** bottom row only (see below) |
 | PMOD jumper | Set to **SLV** (slave mode — FPGA drives all clocks) |
 | Audio output | **Green** 3.5mm jack (LINE OUT) — not the blue one |
+| IceSugar LED | Green RGB blinks ~1.5 Hz (alive). Red = gate (on at idle). |
 
 ## Current State
 
@@ -22,7 +23,7 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 ## Playing the Synth
 
-Connect a serial terminal to the Go Board at **115200 8N1** and type keys to play notes.
+Connect a serial terminal at **115200 8N1** (IceSugar: the **iCELink** COM port, not the breakout DAPLink). The FPGA echoes each byte. Type keys to play notes. Idle gate is **on** (A4 sine) until you hit space.
 
 ### Quick start
 
@@ -146,11 +147,35 @@ apio devices scan-usb   # if upload fails, use this to confirm the board is visi
 ## Common Commands
 
 ```bash
-# Build / flash
+# Build / flash — Go Board (default)
 apio build                          # synthesize bitstream
 apio upload                         # build and flash to board
 apio devices scan-usb               # list connected USB devices
 
+# IceSugar-Pro — USB-C on the **FPGA module** (iCELink, VID 1d50:602b), not the green breakout DAPLINK
+apio build  -e icesugar-pro-ram
+apio upload -e icesugar-pro-ram     # SRAM
+apio upload -e icesugar-pro         # SPI flash
+```
+
+The breakout DAPLink is for Colorlight i5/i9 JTAG. IceSugar-Pro programs only through on-module iCELink. Do not drag a `.bit` onto the `DAPLINK` drive.
+
+IceSugar-Pro **P4** (between HDMI/P3 and P5): I2S2 on the **bottom/outer row only**, HDMI end, do not flip. Count from HDMI.
+
+Pinout: [iCESugar-pro-pinmap.png](https://github.com/wuxx/icesugar-pro/blob/master/doc/iCESugar-pro-pinmap.png) — **P4** table.
+
+| P4 (from HDMI, outer row) | I2S2 | IceSugar |
+|---------------------------|------|----------|
+| 1 | 6 VCC | 3V3 |
+| 2 | 5 GND | GND |
+| 3 | 4 SDATA | R7 |
+| 4 | 3 SCLK | D5 |
+| 5 | 2 LRCK | D4 |
+| 6 | 1 MCLK | E4 |
+
+Inner row (R8 C4 C3 E3) unused.
+
+```bash
 # Simulation / test
 apio test                           # run all self-checking testbenches
 apio sim sim/synth_top_tb.v         # open synth_top waveform in GTKWave
@@ -183,7 +208,8 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 ```
 src/        HDL source
   synth_top.v       Top-level — pure instantiation of uart_top, voice, i2s_tx
-  uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd
+  icesugar_top.v    IceSugar-Pro wrapper — RGB heartbeat, maps SynthTop to ECP5 pins
+  uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd; echoes RX bytes
   uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate/wave signals
   voice.v           Phase accumulator oscillator + ADSR — 16-bit PCM sample per LRCK period
   adsr.v            ADSR envelope generator — 5-state FSM, 16-bit envelope, driven by LRCK tick
@@ -208,7 +234,8 @@ scripts/
   hw_test.py        Hardware test — sends note sequences via pyserial
 
 go-board.pcf        Pin constraints for Nandland Go Board
-apio.ini            APIO project config
+icesugar-pro.lpf    Pin constraints for IceSugar-Pro (P4 I2S)
+apio.ini            APIO project config (go-board default; icesugar-pro / icesugar-pro-ram)
 CLAUDE.md           Verilog coding conventions for this project
 ```
 

@@ -1,7 +1,7 @@
 // UART top-level — instantiates all UART sub-modules
 //
 // Exposes decoded synth controls (note/octave/gate/high/wave) from the RX side
-// and raw TX control inputs for future use (echo, status messages, etc.).
+// Echoes each RX byte on TX. Extra TX bytes can still be pushed via i_TX_DV.
 `include "src/constants.vh"
 
 module uart_top (
@@ -37,8 +37,8 @@ module uart_top (
   UART_TX #(.CLKS_PER_BIT(`CLKS_PER_BIT)) u_tx (
     .i_Rst_L    (1'b1),
     .i_Clock    (i_CLK),
-    .i_TX_DV    (i_TX_DV),
-    .i_TX_Byte  (i_TX_Byte),
+    .i_TX_DV    (w_rx_dv | i_TX_DV),
+    .i_TX_Byte  (w_rx_dv ? w_rx_byte : i_TX_Byte),
     .o_TX_Active(),
     .o_TX_Serial(o_TX_Serial),
     .o_TX_Done  ()
