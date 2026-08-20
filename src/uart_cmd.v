@@ -23,7 +23,15 @@ module uart_cmd (
     output           o_v0_gate,
     output [3:0]     o_v1_note,
     output           o_v1_high,
-    output           o_v1_gate
+    output           o_v1_gate,
+
+    output [7:0]     o_attack,
+    output [7:0]     o_decay,
+    output [7:0]     o_sustain,
+    output [7:0]     o_release,
+    output [1:0]     o_adsr_sel,     // 0=A 1=D 2=S 3=R
+    output reg       o_print_help,
+    output reg       o_print_status
 );
 
   wire w_note_key =
@@ -58,6 +66,11 @@ module uart_cmd (
   reg       r_vgate1 = 1'b0;
   reg       r_mute   = 1'b0;
   reg       r_next   = 1'b1;   // first key after boot → voice 1 (voice 0 holds default A)
+  reg [7:0] r_attack  = `DEFAULT_ATTACK;
+  reg [7:0] r_decay   = `DEFAULT_DECAY;
+  reg [7:0] r_sustain = `DEFAULT_SUSTAIN;
+  reg [7:0] r_release = `DEFAULT_RELEASE;
+  reg [1:0] r_adsr_sel = 2'd0;
 
   initial
   begin
@@ -66,10 +79,15 @@ module uart_cmd (
     o_gate   = 1'b1;
     o_high   = 1'b0;
     o_wave   = `DEFAULT_WAVE;
+    o_print_help   = 1'b0;
+    o_print_status = 1'b0;
   end
 
   always @(posedge i_CLK)
   begin
+    o_print_help   <= 1'b0;
+    o_print_status <= 1'b0;
+
     if (i_RX_DV)
     begin
       case (i_RX_Byte)
@@ -186,6 +204,67 @@ module uart_cmd (
         begin
           o_wave <= 2'd3;
         end  // 4 → square
+        8'h3F:
+        begin
+          o_print_help <= 1'b1;
+        end  // ? → help
+        8'h72:
+        begin
+          r_adsr_sel     <= r_adsr_sel + 2'd1;
+          o_print_status <= 1'b1;
+        end  // r → next ADSR param
+        8'h2D:
+        begin
+          o_print_status <= 1'b1;
+          case (r_adsr_sel)
+            2'd0:
+            begin
+              r_attack <= (r_attack > `ADSR_STEP + 8'd1)
+                        ? (r_attack - `ADSR_STEP) : 8'd1;
+            end
+            2'd1:
+            begin
+              r_decay <= (r_decay > `ADSR_STEP + 8'd1)
+                       ? (r_decay - `ADSR_STEP) : 8'd1;
+            end
+            2'd2:
+            begin
+              r_sustain <= (r_sustain > `ADSR_STEP)
+                         ? (r_sustain - `ADSR_STEP) : 8'd0;
+            end
+            default:
+            begin
+              r_release <= (r_release > `ADSR_STEP + 8'd1)
+                         ? (r_release - `ADSR_STEP) : 8'd1;
+            end
+          endcase
+        end  // - → ADSR down
+        8'h3D, 8'h2B:
+        begin
+          o_print_status <= 1'b1;
+          case (r_adsr_sel)
+            2'd0:
+            begin
+              r_attack <= (r_attack < 8'd255 - `ADSR_STEP)
+                        ? (r_attack + `ADSR_STEP) : 8'd255;
+            end
+            2'd1:
+            begin
+              r_decay <= (r_decay < 8'd255 - `ADSR_STEP)
+                       ? (r_decay + `ADSR_STEP) : 8'd255;
+            end
+            2'd2:
+            begin
+              r_sustain <= (r_sustain < 8'd255 - `ADSR_STEP)
+                         ? (r_sustain + `ADSR_STEP) : 8'd255;
+            end
+            default:
+            begin
+              r_release <= (r_release < 8'd255 - `ADSR_STEP)
+                         ? (r_release + `ADSR_STEP) : 8'd255;
+            end
+          endcase
+        end  // = or + → ADSR up
       endcase
 
       if (w_note_key)
@@ -207,6 +286,14 @@ module uart_cmd (
         begin
           r_next <= ~r_next;
         end
+        o_print_status <= 1'b1;
+      end
+      else if ((i_RX_Byte == 8'h7A) || (i_RX_Byte == 8'h78) ||
+               (i_RX_Byte == 8'h20) ||
+               (i_RX_Byte == 8'h31) || (i_RX_Byte == 8'h32) ||
+               (i_RX_Byte == 8'h33) || (i_RX_Byte == 8'h34))
+      begin
+        o_print_status <= 1'b1;
       end
     end
   end
@@ -217,5 +304,11 @@ module uart_cmd (
   assign o_v1_note = r_note1;
   assign o_v1_high = r_high1;
   assign o_v1_gate = r_vgate1 & ~r_mute;
+
+  assign o_attack   = r_attack;
+  assign o_decay    = r_decay;
+  assign o_sustain  = r_sustain;
+  assign o_release  = r_release;
+  assign o_adsr_sel = r_adsr_sel;
 
 endmodule

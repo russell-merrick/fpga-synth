@@ -30,3 +30,4 @@
 `define DEFAULT_DECAY    8'd20      // ~7 ms decay
 `define DEFAULT_SUSTAIN  8'd200     // 78 % sustain level  (200×128 = 25600)
 `define DEFAULT_RELEASE  8'd20      // ~26 ms release  (25600/20 ≈ 1280 ticks)
+`define ADSR_STEP        8'd8       // UART - / = step

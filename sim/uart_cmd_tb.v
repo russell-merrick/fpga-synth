@@ -26,24 +26,38 @@ module uart_cmd_tb;
   wire [3:0] o_v1_note;
   wire       o_v1_high;
   wire       o_v1_gate;
+  wire [7:0] o_attack;
+  wire [7:0] o_decay;
+  wire [7:0] o_sustain;
+  wire [7:0] o_release;
+  wire [1:0] o_adsr_sel;
+  wire       o_print_help;
+  wire       o_print_status;
 
   always #(CLK_PERIOD/2) CLK = ~CLK;
 
   uart_cmd dut (
-    .i_CLK     (CLK),
-    .i_RX_DV   (i_RX_DV),
-    .i_RX_Byte (i_RX_Byte),
-    .o_note    (o_note),
-    .o_octave  (o_octave),
-    .o_gate    (o_gate),
-    .o_high    (o_high),
-    .o_wave    (o_wave),
-    .o_v0_note (o_v0_note),
-    .o_v0_high (o_v0_high),
-    .o_v0_gate (o_v0_gate),
-    .o_v1_note (o_v1_note),
-    .o_v1_high (o_v1_high),
-    .o_v1_gate (o_v1_gate)
+    .i_CLK          (CLK),
+    .i_RX_DV        (i_RX_DV),
+    .i_RX_Byte      (i_RX_Byte),
+    .o_note         (o_note),
+    .o_octave       (o_octave),
+    .o_gate         (o_gate),
+    .o_high         (o_high),
+    .o_wave         (o_wave),
+    .o_v0_note      (o_v0_note),
+    .o_v0_high      (o_v0_high),
+    .o_v0_gate      (o_v0_gate),
+    .o_v1_note      (o_v1_note),
+    .o_v1_high      (o_v1_high),
+    .o_v1_gate      (o_v1_gate),
+    .o_attack       (o_attack),
+    .o_decay        (o_decay),
+    .o_sustain      (o_sustain),
+    .o_release      (o_release),
+    .o_adsr_sel     (o_adsr_sel),
+    .o_print_help   (o_print_help),
+    .o_print_status (o_print_status)
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
@@ -159,6 +173,19 @@ module uart_cmd_tb;
     send_cmd(8'hFF);   // unknown
     pass_fail(o_note == 4'd9 && o_octave == 3'd0 && o_gate == 1'b1,
               "unknown byte: state unchanged");
+
+    // ── ADSR select / step ────────────────────────────────────────────────────
+    pass_fail(o_attack == `DEFAULT_ATTACK && o_adsr_sel == 2'd0,
+              "ADSR defaults: attack=80 sel=A");
+    send_cmd(8'h72);  // r
+    pass_fail(o_adsr_sel == 2'd1, "r -> select decay");
+    send_cmd(8'h2D);  // -
+    pass_fail(o_decay == (`DEFAULT_DECAY - `ADSR_STEP), "- -> decay down");
+    send_cmd(8'h3D);  // =
+    pass_fail(o_decay == `DEFAULT_DECAY, "= -> decay back");
+    send_cmd(8'h3F);  // ?
+    pass_fail(o_adsr_sel == 2'd1 && o_decay == `DEFAULT_DECAY,
+              "? does not change ADSR");
 
     // ── Summary ───────────────────────────────────────────────────────────────
     finish_test;

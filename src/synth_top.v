@@ -24,13 +24,15 @@ module SynthTop (
   wire [3:0] w_v1_note;
   wire       w_v1_high;
   wire       w_v1_gate;
+  wire [7:0] w_attack;
+  wire [7:0] w_decay;
+  wire [7:0] w_sustain;
+  wire [7:0] w_release;
 
   uart_top u_uart (
     .i_CLK       (CLK),
     .i_RX_Serial (RX),
     .o_TX_Serial (TX),
-    .i_TX_DV     (1'b0),
-    .i_TX_Byte   (8'h00),
     .o_note      (w_note),
     .o_octave    (w_octave),
     .o_gate      (w_gate),
@@ -41,7 +43,11 @@ module SynthTop (
     .o_v0_gate   (w_v0_gate),
     .o_v1_note   (w_v1_note),
     .o_v1_high   (w_v1_high),
-    .o_v1_gate   (w_v1_gate)
+    .o_v1_gate   (w_v1_gate),
+    .o_attack    (w_attack),
+    .o_decay     (w_decay),
+    .o_sustain   (w_sustain),
+    .o_release   (w_release)
   );
 
   wire [15:0] w_sample0;
@@ -49,28 +55,36 @@ module SynthTop (
   wire        w_DV;
 
   voice u_voice0 (
-    .i_CLK    (CLK),
-    .i_note   (w_v0_note),
-    .i_octave (w_octave),
-    .i_gate   (w_v0_gate),
-    .i_high   (w_v0_high),
-    .i_wave   (w_wave),
-    .i_DV     (w_DV),
-    .o_sample (w_sample0)
+    .i_CLK     (CLK),
+    .i_note    (w_v0_note),
+    .i_octave  (w_octave),
+    .i_gate    (w_v0_gate),
+    .i_high    (w_v0_high),
+    .i_wave    (w_wave),
+    .i_attack  (w_attack),
+    .i_decay   (w_decay),
+    .i_sustain (w_sustain),
+    .i_release (w_release),
+    .i_DV      (w_DV),
+    .o_sample  (w_sample0)
   );
 
   generate
     if (`NUM_VOICES == 2)
     begin : g_poly
       voice u_voice1 (
-        .i_CLK    (CLK),
-        .i_note   (w_v1_note),
-        .i_octave (w_octave),
-        .i_gate   (w_v1_gate),
-        .i_high   (w_v1_high),
-        .i_wave   (w_wave),
-        .i_DV     (w_DV),
-        .o_sample (w_sample1)
+        .i_CLK     (CLK),
+        .i_note    (w_v1_note),
+        .i_octave  (w_octave),
+        .i_gate    (w_v1_gate),
+        .i_high    (w_v1_high),
+        .i_wave    (w_wave),
+        .i_attack  (w_attack),
+        .i_decay   (w_decay),
+        .i_sustain (w_sustain),
+        .i_release (w_release),
+        .i_DV      (w_DV),
+        .o_sample  (w_sample1)
       );
     end
     else

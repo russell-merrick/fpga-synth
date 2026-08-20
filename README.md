@@ -23,7 +23,7 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 ## Playing the Synth
 
-Connect a serial terminal at **115200 8N1** (IceSugar: the **iCELink** COM port, not the breakout DAPLink). The FPGA echoes each byte. Type keys to play notes. Idle is **A4 sine** on voice 0. Each new note key takes the other voice (last two notes sound together). Space mutes both.
+Connect a serial terminal at **115200 8N1** (IceSugar: the **iCELink** COM port, not the breakout DAPLink). After ~80 ms the board prints a help menu. Commands print a status line (`A=… D=… S=… R=… *A wav=sin o=4 0=A 1=--`). Idle is **A4 sine** on voice 0. Each new note key takes the other voice (last two notes sound together). Space mutes both.
 
 ### Quick start
 
@@ -71,6 +71,10 @@ C  C#   D  D#   E   F  F#   G  G#   A  A#   B   C+
 | `2` | Waveform: triangle |
 | `3` | Waveform: sawtooth |
 | `4` | Waveform: square |
+| `r` | Select next ADSR param (A → D → S → R) |
+| `-` | Decrease selected ADSR value (step 8) |
+| `=` or `+` | Increase selected ADSR value |
+| `?` | Reprint help menu |
 
 ### LEDs during playback
 
@@ -90,7 +94,7 @@ Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
 1. ~~**UART control**~~ ✓ — Ableton-layout keyboard over USB serial, confirmed on hardware
 2. ~~**Modular refactor**~~ ✓ — `synth_top.v` is pure instantiation of `uart_top`, `voice`, `i2s_tx`
 3. ~~**Wavetable oscillator**~~ ✓ — ROM-based wavetable with 4 selectable waveforms (sine, triangle, sawtooth, square), selected via keys 1–4
-4. ~~**ADSR envelope**~~ ✓ — per-note attack/decay/sustain/release; rates hardcoded in `constants.vh`, to be made controllable
+4. ~~**ADSR envelope**~~ ✓ — live `r` / `-` / `=` on UART; help/status menu on TX
 5. ~~**Polyphony**~~ ✓ — two voices on IceSugar-Pro (round-robin; space mutes both). Go Board stays 1 voice (`NUM_VOICES=1`).
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
 7. **Effects** — reverb, filter, etc. (stretch)
@@ -209,8 +213,9 @@ All clocks are derived from the 25 MHz system clock via a free-running counter:
 src/        HDL source
   synth_top.v       Top-level — pure instantiation of uart_top, voice, i2s_tx
   icesugar_top.v    IceSugar-Pro wrapper — RGB heartbeat, maps SynthTop to ECP5 pins
-  uart_top.v        UART wiring — instantiates UART_RX, UART_TX, uart_cmd; echoes RX bytes
-  uart_cmd.v        Command decoder — maps ASCII keys to note/octave/gate/wave signals
+  uart_top.v        UART wiring — RX, uart_cmd, uart_menu, TX
+  uart_menu.v       Help banner + status line printer
+  uart_cmd.v        Command decoder — notes, ADSR, wave, octave, mute
   voice.v           Phase accumulator oscillator + ADSR — 16-bit PCM sample per LRCK period
   adsr.v            ADSR envelope generator — 5-state FSM, 16-bit envelope, driven by LRCK tick
   i2s_tx.v          I2S transmitter — generates MCLK/LRCK/SCLK, serializes sample

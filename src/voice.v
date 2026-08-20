@@ -9,6 +9,10 @@ module voice (
     input        i_gate,
     input        i_high,
     input  [1:0] i_wave,    // 0=sine 1=triangle 2=sawtooth 3=square
+    input  [7:0] i_attack,
+    input  [7:0] i_decay,
+    input  [7:0] i_sustain,
+    input  [7:0] i_release,
     input        i_DV,
     output [15:0] o_sample
 );
@@ -67,10 +71,10 @@ module voice (
     .i_CLK     (i_CLK),
     .i_DV      (i_DV),
     .i_gate    (i_gate),
-    .i_attack  (`DEFAULT_ATTACK),
-    .i_decay   (`DEFAULT_DECAY),
-    .i_sustain (`DEFAULT_SUSTAIN),
-    .i_release (`DEFAULT_RELEASE),
+    .i_attack  (i_attack),
+    .i_decay   (i_decay),
+    .i_sustain (i_sustain),
+    .i_release (i_release),
     .o_env     (w_env)
   );
 
