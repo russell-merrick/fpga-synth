@@ -20,6 +20,12 @@ module uart_cmd_tb;
   wire       o_gate;
   wire       o_high;
   wire [1:0] o_wave;
+  wire [3:0] o_v0_note;
+  wire       o_v0_high;
+  wire       o_v0_gate;
+  wire [3:0] o_v1_note;
+  wire       o_v1_high;
+  wire       o_v1_gate;
 
   always #(CLK_PERIOD/2) CLK = ~CLK;
 
@@ -31,7 +37,13 @@ module uart_cmd_tb;
     .o_octave  (o_octave),
     .o_gate    (o_gate),
     .o_high    (o_high),
-    .o_wave    (o_wave)
+    .o_wave    (o_wave),
+    .o_v0_note (o_v0_note),
+    .o_v0_high (o_v0_high),
+    .o_v0_gate (o_v0_gate),
+    .o_v1_note (o_v1_note),
+    .o_v1_high (o_v1_high),
+    .o_v1_gate (o_v1_gate)
   );
 
   // ── Test infrastructure ─────────────────────────────────────────────────────
@@ -66,6 +78,21 @@ module uart_cmd_tb;
               o_high   == 1'b0            &&
               o_wave   == `DEFAULT_WAVE,
               "defaults: note=A oct=4 gate=1 high=0 wave=sine");
+
+    // ── 1b. Two-voice allocate from reset (IceSugar / NUM_VOICES>1) ──────────
+    if (`NUM_VOICES > 1)
+    begin
+      send_cmd(8'h61);  // a → C on voice 1
+      send_cmd(8'h64);  // d → E on voice 0
+      pass_fail(o_v0_gate && o_v1_gate && (o_v0_note != o_v1_note),
+                "from reset, a then d -> two voices gated, different notes");
+      send_cmd(8'h20);
+      pass_fail(!o_v0_gate && !o_v1_gate && !o_gate,
+                "space mutes both voices");
+      send_cmd(8'h20);
+      pass_fail(o_v0_gate && o_v1_gate && o_gate,
+                "space again restores both voices");
+    end
 
     // ── 2. All 13 note keys ───────────────────────────────────────────────────
     send_cmd(8'h61); pass_fail(o_note == 4'd0  && !o_high && o_gate, "a → C  (note  0)");

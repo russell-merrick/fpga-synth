@@ -15,12 +15,19 @@ module uart_top (
     input        i_TX_DV,
     input  [7:0] i_TX_Byte,
 
-    // Decoded note parameters
+    // Decoded note parameters (last note / shared)
     output [3:0] o_note,
     output [2:0] o_octave,
     output       o_gate,
     output       o_high,
-    output [1:0] o_wave
+    output [1:0] o_wave,
+
+    output [3:0] o_v0_note,
+    output       o_v0_high,
+    output       o_v0_gate,
+    output [3:0] o_v1_note,
+    output       o_v1_high,
+    output       o_v1_gate
 );
 
   wire       w_rx_dv;
@@ -52,7 +59,13 @@ module uart_top (
     .o_octave  (o_octave),
     .o_gate    (o_gate),
     .o_high    (o_high),
-    .o_wave    (o_wave)
+    .o_wave    (o_wave),
+    .o_v0_note (o_v0_note),
+    .o_v0_high (o_v0_high),
+    .o_v0_gate (o_v0_gate),
+    .o_v1_note (o_v1_note),
+    .o_v1_high (o_v1_high),
+    .o_v1_gate (o_v1_gate)
   );
 
 endmodule

@@ -15,7 +15,7 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 ## Current State
 
 - I2S audio pipeline confirmed working on hardware (CS4344 DAC via PMOD I2S2)
-- **UART-controlled synth** — play notes from a PC keyboard over USB serial at 115200 baud
+- **UART-controlled synth** — play notes from a PC keyboard over USB serial at 115200 baud. IceSugar-Pro: **2-voice** (last two notes); Go Board: 1 voice.
 - Wavetable oscillator with 4 selectable waveforms: sine, triangle, sawtooth, square
 - Chromatic scale across octaves 0–7, Ableton Computer MIDI Keyboard layout (see [Playing the Synth](#playing-the-synth) below)
 - **ADSR envelope** — ~8 ms attack, ~7 ms decay, 78% sustain, ~26 ms release (rates hardcoded in `constants.vh`)
@@ -23,7 +23,7 @@ An open-source FPGA synthesizer built on the **Nandland Go Board** (iCE40 HX1K),
 
 ## Playing the Synth
 
-Connect a serial terminal at **115200 8N1** (IceSugar: the **iCELink** COM port, not the breakout DAPLink). The FPGA echoes each byte. Type keys to play notes. Idle gate is **on** (A4 sine) until you hit space.
+Connect a serial terminal at **115200 8N1** (IceSugar: the **iCELink** COM port, not the breakout DAPLink). The FPGA echoes each byte. Type keys to play notes. Idle is **A4 sine** on voice 0. Each new note key takes the other voice (last two notes sound together). Space mutes both.
 
 ### Quick start
 
@@ -91,7 +91,7 @@ Default octave is 4 → LEDs show `OFF ON OFF OFF` (binary 0100).
 2. ~~**Modular refactor**~~ ✓ — `synth_top.v` is pure instantiation of `uart_top`, `voice`, `i2s_tx`
 3. ~~**Wavetable oscillator**~~ ✓ — ROM-based wavetable with 4 selectable waveforms (sine, triangle, sawtooth, square), selected via keys 1–4
 4. ~~**ADSR envelope**~~ ✓ — per-note attack/decay/sustain/release; rates hardcoded in `constants.vh`, to be made controllable
-5. **Polyphony** — multiple simultaneous voices
+5. ~~**Polyphony**~~ ✓ — two voices on IceSugar-Pro (round-robin; space mutes both). Go Board stays 1 voice (`NUM_VOICES=1`).
 6. **MIDI input** — via PMOD UART or dedicated MIDI PMOD (future)
 7. **Effects** — reverb, filter, etc. (stretch)
 

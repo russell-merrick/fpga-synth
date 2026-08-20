@@ -162,6 +162,17 @@ module synth_top_tb;
     repeat(600) @(posedge CLK);
     pass_fail(dut.u_uart.u_cmd.o_wave == 2'd0, "UART '1' -> wave=sine");
 
+    // ── 11. Two-voice polyphony (IceSugar / NUM_VOICES>1) ─────────────────────
+    if (`NUM_VOICES > 1)
+    begin
+      send_byte(8'h61);   // 'a' → C on one voice
+      send_byte(8'h64);   // 'd' → E on the other
+      repeat(600) @(posedge CLK);
+      pass_fail(dut.u_uart.u_cmd.o_v0_gate && dut.u_uart.u_cmd.o_v1_gate &&
+                (dut.u_uart.u_cmd.o_v0_note != dut.u_uart.u_cmd.o_v1_note),
+                "UART a+d -> two voices gated, different notes");
+    end
+
     // ── Summary ───────────────────────────────────────────────────────────────
     finish_test;
   end

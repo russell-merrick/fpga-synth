@@ -18,6 +18,9 @@
 `define DEFAULT_NOTE    9           // 0=C … 9=A … 11=B
 `define DEFAULT_OCTAVE  4
 `define DEFAULT_WAVE    2'd0        // 0=sine 1=triangle 2=sawtooth 3=square
+`ifndef NUM_VOICES
+`define NUM_VOICES      2           // 1 on Go Board (HX1K), 2 on IceSugar-Pro
+`endif
 
 // ── ADSR defaults ─────────────────────────────────────────────────────────────
 // Rate parameters: increment/decrement applied to the 16-bit envelope per
