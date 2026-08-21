@@ -17,7 +17,9 @@
 // ── Synth defaults ────────────────────────────────────────────────────────────
 `define DEFAULT_NOTE    9           // 0=C … 9=A … 11=B
 `define DEFAULT_OCTAVE  4
+`ifndef DEFAULT_WAVE
 `define DEFAULT_WAVE    2'd0        // 0=sine 1=triangle 2=sawtooth 3=square
+`endif
 `ifndef NUM_VOICES
 `define NUM_VOICES      2           // 1 on Go Board (HX1K), 2 on IceSugar-Pro
 `endif
@@ -31,3 +33,20 @@
 `define DEFAULT_SUSTAIN  8'd200     // 78 % sustain level  (200×128 = 25600)
 `define DEFAULT_RELEASE  8'd20      // ~26 ms release  (25600/20 ≈ 1280 ticks)
 `define ADSR_STEP        8'd8       // UART - / = step
+
+// ── Filter (303-style VCF) ────────────────────────────────────────────────────
+// Filter env is 20-bit; subtracted by i_fdecay per sample (~48.8 kHz).
+// Default K=64 → ~0.34 s sweep. Higher K = faster close.
+`define DEFAULT_CUTOFF   8'd40      // closed; env opens it on each note
+`define DEFAULT_RES      8'd210
+`define DEFAULT_FENV     8'd255     // full sweep amount
+`define DEFAULT_FDECAY   8'd64      // ~340 ms  (1048575 / 64 / 48828)
+`define DEFAULT_DRIVE    8'd96
+`define ACCENT_DRIVE     8'd80      // extra drive on accent
+`define ACCENT_RES       8'd40      // extra resonance on accent
+`define SLIDE_SHIFT      5'd12      // slew tau ~84 ms
+`define DEFAULT_FM_INDEX 8'd0       // 0 = no FM
+`define DEFAULT_FM_RATIO 8'd2       // modulator = 2× carrier
+`define DEFAULT_FOLD     8'd0       // 0 = no fold
+`define DEFAULT_BPM      8'd120
+`define DEFAULT_SEQ_LEN  5'd16

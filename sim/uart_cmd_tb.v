@@ -30,7 +30,20 @@ module uart_cmd_tb;
   wire [7:0] o_decay;
   wire [7:0] o_sustain;
   wire [7:0] o_release;
-  wire [1:0] o_adsr_sel;
+  wire [3:0] o_param_sel;
+  wire [7:0] o_drive;
+  wire [7:0] o_fm_index;
+  wire [7:0] o_fm_ratio;
+  wire [7:0] o_fold;
+  wire       o_accent;
+  wire       o_slide;
+  wire [7:0] o_cutoff;
+  wire [7:0] o_res;
+  wire [7:0] o_fenv_amt;
+  wire [7:0] o_fdecay;
+  wire       o_seq_play;
+  wire [7:0] o_bpm;
+  wire       o_note_trig;
   wire       o_print_help;
   wire       o_print_status;
 
@@ -55,7 +68,20 @@ module uart_cmd_tb;
     .o_decay        (o_decay),
     .o_sustain      (o_sustain),
     .o_release      (o_release),
-    .o_adsr_sel     (o_adsr_sel),
+    .o_param_sel    (o_param_sel),
+    .o_cutoff       (o_cutoff),
+    .o_res          (o_res),
+    .o_fenv_amt     (o_fenv_amt),
+    .o_fdecay       (o_fdecay),
+    .o_drive        (o_drive),
+    .o_fm_index     (o_fm_index),
+    .o_fm_ratio     (o_fm_ratio),
+    .o_fold         (o_fold),
+    .o_accent       (o_accent),
+    .o_slide        (o_slide),
+    .o_seq_play     (o_seq_play),
+    .o_bpm          (o_bpm),
+    .o_note_trig    (o_note_trig),
     .o_print_help   (o_print_help),
     .o_print_status (o_print_status)
   );
@@ -91,7 +117,7 @@ module uart_cmd_tb;
               o_gate   == 1'b1            &&
               o_high   == 1'b0            &&
               o_wave   == `DEFAULT_WAVE,
-              "defaults: note=A oct=4 gate=1 high=0 wave=sine");
+              "defaults: note=A oct=4 gate=1 high=0 wave=def");
 
     // ── 1b. Two-voice allocate from reset (IceSugar / NUM_VOICES>1) ──────────
     if (`NUM_VOICES > 1)
@@ -174,18 +200,104 @@ module uart_cmd_tb;
     pass_fail(o_note == 4'd9 && o_octave == 3'd0 && o_gate == 1'b1,
               "unknown byte: state unchanged");
 
-    // ── ADSR select / step ────────────────────────────────────────────────────
-    pass_fail(o_attack == `DEFAULT_ATTACK && o_adsr_sel == 2'd0,
-              "ADSR defaults: attack=80 sel=A");
+    // ── ADSR / filter select / step ───────────────────────────────────────────
+    pass_fail(o_attack == `DEFAULT_ATTACK && o_param_sel == 3'd0 &&
+              o_cutoff == `DEFAULT_CUTOFF && o_res == `DEFAULT_RES,
+              "defaults: A=80 sel=A C/Q at reset");
     send_cmd(8'h72);  // r
-    pass_fail(o_adsr_sel == 2'd1, "r -> select decay");
+    pass_fail(o_param_sel == 3'd1, "r -> select decay");
     send_cmd(8'h2D);  // -
     pass_fail(o_decay == (`DEFAULT_DECAY - `ADSR_STEP), "- -> decay down");
     send_cmd(8'h3D);  // =
     pass_fail(o_decay == `DEFAULT_DECAY, "= -> decay back");
+    send_cmd(8'h72);  // S
+    send_cmd(8'h72);  // R
+    send_cmd(8'h72);  // C
+    pass_fail(o_param_sel == 3'd4, "r x4 from D -> select cutoff");
+    send_cmd(8'h2D);
+    pass_fail(o_cutoff == (`DEFAULT_CUTOFF - `ADSR_STEP), "- -> cutoff down");
+    send_cmd(8'h72);  // Q
+    send_cmd(8'h3D);
+    pass_fail(o_param_sel == 3'd5 &&
+              o_res == (`DEFAULT_RES + `ADSR_STEP),
+              "r then = -> res up");
     send_cmd(8'h3F);  // ?
-    pass_fail(o_adsr_sel == 2'd1 && o_decay == `DEFAULT_DECAY,
-              "? does not change ADSR");
+    pass_fail(o_param_sel == 3'd5 && o_res == (`DEFAULT_RES + `ADSR_STEP),
+              "? does not change params");
+    send_cmd(8'h63);  // c
+    pass_fail(o_param_sel == 3'd4, "c -> select cutoff");
+    send_cmd(8'h76);  // v
+    pass_fail(o_param_sel == 3'd6, "v -> select fenv amt");
+
+    // ── note_trig pulse ───────────────────────────────────────────────────────
+    @(negedge CLK);
+    i_RX_DV   = 1'b1;
+    i_RX_Byte = 8'h61;
+    @(posedge CLK);
+    @(negedge CLK);
+    pass_fail(o_note_trig == 1'b1, "note key pulses o_note_trig");
+    i_RX_DV = 1'b0;
+    @(posedge CLK);
+    @(negedge CLK);
+    pass_fail(o_note_trig == 1'b0, "o_note_trig is one cycle");
+
+    send_cmd(8'h2E);
+    pass_fail(o_accent == 1'b1, ". toggles accent on");
+    send_cmd(8'h2E);
+    pass_fail(o_accent == 1'b0, ". toggles accent off");
+    send_cmd(8'h6F);
+    pass_fail(o_param_sel == 4'd8, "o -> select drive");
+    send_cmd(8'h69);
+    pass_fail(o_param_sel == 4'd9, "i -> select FM index");
+    send_cmd(8'h6E);
+    pass_fail(o_param_sel == 4'd10 && o_fm_ratio == `DEFAULT_FM_RATIO,
+              "n -> select FM ratio");
+    send_cmd(8'h3D);
+    pass_fail(o_fm_ratio == (`DEFAULT_FM_RATIO + 8'd1), "= -> ratio up");
+    send_cmd(8'h6C);
+    pass_fail(o_param_sel == 4'd11, "l -> select fold");
+    send_cmd(8'h2F);
+    pass_fail(o_slide == 1'b1, "/ toggles slide on");
+    @(negedge CLK);
+    i_RX_DV   = 1'b1;
+    i_RX_Byte = 8'h61;
+    @(posedge CLK);
+    @(negedge CLK);
+    pass_fail(o_note_trig == 1'b0, "slide note does not trig VCF");
+    i_RX_DV = 1'b0;
+    @(posedge CLK);
+    send_cmd(8'h2F);
+    pass_fail(o_slide == 1'b0, "/ toggles slide off");
+
+`ifndef SKIP_SEQ
+    send_cmd(8'h3A);  // :
+    send_cmd(8'h43);  // C
+    send_cmd(8'h31);  // 1
+    send_cmd(8'h30);  // 0
+    send_cmd(8'h30);  // 0
+    send_cmd(8'h0A);  // LF
+    pass_fail(o_cutoff == 8'd100, ":C100 sets cutoff");
+    send_cmd(8'h70);
+    pass_fail(o_seq_play == 1'b1, "p starts sequencer");
+    send_cmd(8'h70);
+    pass_fail(o_seq_play == 1'b0, "p stops sequencer");
+    pass_fail(!o_v0_gate && !o_v1_gate && !o_gate, "p-stop mutes voices");
+    send_cmd(8'h3A);
+    send_cmd(8'h50);  // P
+    send_cmd(8'h30);
+    send_cmd(8'h30);
+    send_cmd(8'h31);
+    send_cmd(8'h0A);
+    pass_fail(o_seq_play == 1'b1, ":P001 starts sequencer");
+    send_cmd(8'h3A);
+    send_cmd(8'h50);
+    send_cmd(8'h30);
+    send_cmd(8'h30);
+    send_cmd(8'h30);
+    send_cmd(8'h0A);
+    pass_fail(o_seq_play == 1'b0, ":P000 stops sequencer");
+    pass_fail(!o_v0_gate && !o_v1_gate && !o_gate, ":P000 mutes voices");
+`endif
 
     // ── Summary ───────────────────────────────────────────────────────────────
     finish_test;

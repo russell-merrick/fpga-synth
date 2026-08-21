@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>icesugar</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">◆</span>
+        <div>
+          <h1>icesugar</h1>
+          <p class="tagline">LFE5U-25F · 16-step acid · UART 115200</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <select id="port" class="select" aria-label="Serial port"></select>
+        <button type="button" class="btn" id="btn-refresh">Ports</button>
+        <button type="button" class="btn primary" id="btn-connect">Connect</button>
+        <span class="pill" id="link-pill">offline</span>
+      </div>
+    </header>
+
+    <section class="session" aria-label="Transport">
+      <button type="button" class="btn primary big" id="btn-play">Play</button>
+      <label class="field">
+        <span>BPM</span>
+        <input type="number" id="bpm" min="40" max="240" value="120" />
+      </label>
+      <label class="field">
+        <span>Octave</span>
+        <input type="number" id="octave" min="0" max="7" value="4" />
+      </label>
+      <label class="field">
+        <span>Length</span>
+        <input type="number" id="length" min="1" max="16" value="16" />
+      </label>
+      <label class="field">
+        <span>Wave</span>
+        <select id="wave" class="select">
+          <option value="0">Sine</option>
+          <option value="1">Triangle</option>
+          <option value="2" selected>Saw</option>
+          <option value="3">Square</option>
+        </select>
+      </label>
+      <button type="button" class="btn" id="btn-push">Push pattern</button>
+    </section>
+
+    <section class="panel" aria-label="Sequencer">
+      <div class="panel-head">
+        <h2>Sequencer</h2>
+        <p class="hint">Click pitch · A accent · S slide · R rest · FPGA clocks 16ths</p>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="knob-wrap" aria-label="Parameters">
+      <div class="panel">
+        <h2>Filter</h2>
+        <div class="knobs" id="knobs-vcf"></div>
+      </div>
+      <div class="panel">
+        <h2>Amp</h2>
+        <div class="knobs" id="knobs-adsr"></div>
+      </div>
+      <div class="panel">
+        <h2>Tone</h2>
+        <div class="knobs" id="knobs-tone"></div>
+      </div>
+    </section>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
